@@ -2,6 +2,7 @@ import cv2
 import dlib
 import numpy as np
 from scipy.spatial import distance as dist
+from imutils import face_utils
 
 PREDICTOR_PATH = "shape_predictor_68_face_landmarks.dat"
 predictor = dlib.shape_predictor(PREDICTOR_PATH)
@@ -30,7 +31,7 @@ def annotate_landmarks(im,landmarks):
 	im = im.copy()
 	for idx,point in enumerate(landmarks):
 		pos = (point[0,0],point[0,1])
-		#cv2.putText(im,str(idx),pos,fontFace=cv2.FONT_HERSHEY_SCRIPT_SIMPLEX,fontScale=0.4,color=(0,0,255))
+		cv2.putText(im,str(idx),pos,fontFace=cv2.FONT_HERSHEY_SCRIPT_SIMPLEX,fontScale=0.4,color=(0,0,255))
 		cv2.circle(im,pos,3,color=(255,255,102))
 	
 	
@@ -75,22 +76,30 @@ def right_eye(landmarks):
 	r_ear = (r_A+r_B)/(2.0*r_C)
 	return r_ear
 
+def frown(landmarks):
+	frown_features = []
+	frown_features.append(landmarks[21])
+	frown_features.append(landmarks[22])
+	frown_features = np.squeeze(np.asarray(frown_features))
+	dist_frown = dist.euclidean(frown_features[0],frown_features[1])
+	return dist_frown
 
 def eye_open(image):
-	print("1")
 	landmarks = get_landmarks(image)
 
 	if landmarks == "error":
-		return image,0,0
+		return image,0,0,0
 
 	image_with_landmarks = annotate_landmarks(image,landmarks)
 	left_ear = left_eye(landmarks)
 	#print(top_lip_center)
 	right_ear = right_eye(landmarks)
-	print(left_ear)
-	print(right_ear)
+	frown_eyelids = frown(landmarks)
+	
+	#print(left_ear)
+	#print(right_ear)
 
-	return image_with_landmarks, left_ear, right_ear
+	return image_with_landmarks, left_ear, right_ear, frown_eyelids
 
 
 
@@ -99,9 +108,19 @@ cap = cv2.VideoCapture(0)
 blinks = 0
 blink_status = False
 i=0
+frown_count = 0
+total_frames = 0
+
 while True:
 	ret, frame = cap.read()
-	image_landmarks, left_ear, right_ear = eye_open(frame)
+	image_landmarks, left_ear, right_ear, frown_eyelids = eye_open(frame)
+	#print("Frown Dist: "+str(frown_eyelids))
+	
+	total_frames+=1
+
+	if frown_eyelids<20:
+		frown_count+=1
+		#print("Less than frown:"+str(frown_count))
 
 	prev_blink_status = blink_status
 	
@@ -121,15 +140,16 @@ while True:
 	if prev_blink_status == True and blink_status == False:
 		blinks=blinks+1
 
-	cv2.imwrite("frame"+str(i)+".jpg",frame)
+	#cv2.imwrite("frame"+str(i)+".jpg",frame)
 	
 	cv2.imshow("Live Landmarks",image_landmarks)
 	cv2.imshow("Blink Detection",frame)
 
 	# 13 is the Enter key
-	if cv2.waitKey(1) == 13:
+	if cv2.waitKey(1) & 0xFF == ord('q'):
 		break
 
+print("Frown Percentage: "+str(round((frown_count/total_frames)*100,2)))
 cap.release()
 cv2.destroyAllWindows()
 
