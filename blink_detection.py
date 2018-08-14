@@ -12,7 +12,7 @@ from scipy.spatial.distance import euclidean as dist
 #Defining EAR
 ##EAR is the ratio between width and height of eye
 EYE_AR_THRESH = 0.43
-EYE_AR_CONSEC_FRAMES = 2
+EYE_AR_CONSEC_FRAMES = 1
 
 L_COUNTER = 0  # Counts number of frame left eye has been closed
 R_COUNTER = 0  # Counts number of frame right eye has been closed
@@ -94,14 +94,17 @@ detector = dlib.get_frontal_face_detector()
 predictor = dlib.shape_predictor(face_landmark_path)
 
 
-cam = cv2.VideoCapture(0)
+cam = cv2.VideoCapture("Rose.mp4")
 
 frame_no=0
 x=list()
 y=list()
+TOTAL_TIME_VIDEO = 0
 
 while True:
     ret, img = cam.read()
+    TOTAL_TIME_VIDEO = cam.get(cv2.CAP_PROP_POS_MSEC)
+    
     img, rects, feature_array = find_features(img)
     n_faces = len(rects)
     if n_faces!=0:
@@ -112,6 +115,8 @@ while True:
         L_COUNTER += l_EAR <= EYE_AR_THRESH
         R_COUNTER += r_EAR <= EYE_AR_THRESH
 
+        eye_aspect_ratio = (l_EAR+r_EAR)/2.0
+        #print(eye_aspect_ratio)
         if L_COUNTER == EYE_AR_CONSEC_FRAMES:
             L_COUNTER = 0
             TOTAL_BLINK_COUNTER += 1  # Blink has been Detected in the Left eye
@@ -121,6 +126,7 @@ while True:
             TOTAL_BLINK_COUNTER += 1  # Blink has been Detected in the  Right eye
             R_BLINK_COUNTER += 1
 
+        
         cv2.putText(img, "Blinks: {} , {} ".format(L_BLINK_COUNTER, R_BLINK_COUNTER), (10, 30),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
         cv2.putText(img, "EAR: {:.2f} , {:.2f} ".format(l_EAR,r_EAR), (300, 30),
@@ -134,6 +140,21 @@ while True:
     elif waitKey == 114:#'R' Clicked.Reset Counter 
         L_BLINK_COUNTER = 0
         R_BLINK_COUNTER = 0
+
+TOTAL_TIME_VIDEO = int(TOTAL_TIME_VIDEO/1000)
+TOTAL_BLINK_COUNTER = int(TOTAL_BLINK_COUNTER/2)
+print(TOTAL_BLINK_COUNTER)
+print(TOTAL_TIME_VIDEO)
+
+TOTAL_TIME_VIDEO_SECS = TOTAL_TIME_VIDEO/60
+
+# Ideal Blinking Rate is 15-20 blinks (per minute)
+# 15 blinks : Normal , Nervous : Very low
+# 20 blinks :        , Nervous : 25-40%
+# 25 blinks :        , Nervous : >50% -75%
+# 30 blinks :        , Nervous : 75-100%
+
+if TOTAL_BLINK_COUNTER > TOTAL_TIME_VIDEO_SECS/4
 
 # Release the webcam
 cam.release()
