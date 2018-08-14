@@ -46,7 +46,7 @@ def get_head_pose(shape):
     image_pts = np.float32([shape[17], shape[21], shape[22], shape[26], shape[36],
                             shape[39], shape[42], shape[45], shape[31], shape[35],
                             shape[48], shape[54], shape[57], shape[8]])
-
+    
     _, rotation_vec, translation_vec = cv2.solvePnP(object_pts, image_pts, cam_matrix, dist_coeffs)
 
     reprojectdst, _ = cv2.projectPoints(reprojectsrc, rotation_vec, translation_vec, cam_matrix,
@@ -115,7 +115,7 @@ def main():
                 cv2.putText(frame, "Z: " + "{:7.2f}".format(euler_angle[2, 0]), (20, 80), cv2.FONT_HERSHEY_SIMPLEX,
                             0.75, (0, 0, 0), thickness=2)
                 #print("{:2.2f}".format(abs(euler_angle[1, 0])))
-                if round(abs(euler_angle[0,0]))>20.0 or round(abs(euler_angle[1,0]))>20.0:
+                if round(abs(euler_angle[0,0]))<=20.0 and round(abs(euler_angle[1,0]))<=20.0:
                     attention+=1
 
             cv2.imshow("demo", frame)
@@ -123,7 +123,7 @@ def main():
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 
-    attention_perc=round(((num_frames-attention)/num_frames)*100,2)
+    attention_perc=round((attention/num_frames)*100,2)
     print("Attentive:"+str(attention_perc)+"%")
     # Release the webcam
     cap.release()
