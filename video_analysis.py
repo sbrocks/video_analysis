@@ -193,7 +193,6 @@ while(cap.isOpened()):
 	ret, img = cap.read()
 	if ret == True:
 		#img = cv2.imread('C:/Users/IS96273/Desktop/hababam.jpg')
-		face_rects = detector(image, 0)
 		gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
 		faces = face_cascade.detectMultiScale(gray, 1.3, 5)

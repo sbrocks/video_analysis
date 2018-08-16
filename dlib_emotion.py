@@ -1,6 +1,8 @@
 import numpy as np
 import cv2
+import dlib
 from keras.preprocessing import image
+from imutils import face_utils
 
 #-----------------------------
 #opencv initialization
@@ -8,6 +10,12 @@ from keras.preprocessing import image
 face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_alt2.xml')
 
 cap = cv2.VideoCapture(0)
+
+face_landmark_path = 'shape_predictor_68_face_landmarks.dat'
+detector = dlib.get_frontal_face_detector()
+predictor = dlib.shape_predictor(face_landmark_path)
+
+
 
 """ We use cv2.VideoWriter() to save the video """
 fourcc = cv2.VideoWriter_fourcc(*'XVID')
@@ -20,6 +28,19 @@ out = cv2.VideoWriter('emotion_shrofile.avi',fourcc,20.0,(640,480))
 from keras.models import model_from_json
 model = model_from_json(open("facial_expression_model_structure.json", "r").read())
 model.load_weights('facial_expression_model_weights.h5') #load weights
+
+def rect_to_bb(rect):
+    # take a bounding predicted by dlib and convert it
+    # to the format (x, y, w, h) as we would normally do
+    # with OpenCV
+    x = rect.left()
+    y = rect.top()
+    w = rect.right() - x
+    h = rect.bottom() - y
+ 
+    # return a tuple of (x, y, w, h)
+    return (x, y, w, h)
+
 
 #-----------------------------
 emotion_angry = 0
@@ -37,16 +58,24 @@ while(cap.isOpened()):
 	ret, img = cap.read()
 	if ret == True:
 		#img = cv2.imread('C:/Users/IS96273/Desktop/hababam.jpg')
+		face_rects = detector(img, 0)
 
-		gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+		for face_rect in face_rects:
+	        x,y,w,h = rect_to_bb(face_rect)
+	        cv2.rectangle(img,(x,y),(x+w,y+h),(255,0,0),2)
+	        shape = predictor(img, face_rect)
+	        shape = face_utils.shape_to_np(shape)
 
-		faces = face_cascade.detectMultiScale(gray, 1.3, 5)
-
-		#print(faces) #locations of detected faces
-
-		for (x,y,w,h) in faces:
-			cv2.rectangle(img,(x,y),(x+w,y+h),(255,0,0),2) #draw rectangle to main image
+	        """
+					gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 			
+					faces = face_cascade.detectMultiScale(gray, 1.3, 5)
+			
+					#print(faces) #locations of detected faces
+			
+					for (x,y,w,h) in faces:
+						cv2.rectangle(img,(x,y),(x+w,y+h),(255,0,0),2) #draw rectangle to main image
+			"""			
 			detected_face = img[int(y):int(y+h), int(x):int(x+w)] #crop detected face
 			detected_face = cv2.cvtColor(detected_face, cv2.COLOR_BGR2GRAY) #transform to gray scale
 			detected_face = cv2.resize(detected_face, (48, 48)) #resize to 48x48
