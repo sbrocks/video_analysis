@@ -86,7 +86,14 @@ def get_eyes(features):
     r_eye = features[rStart:rEnd]
     return l_eye, r_eye
 
-
+"""def get_eyebrows(features):
+    (lStart, lEnd) = face_utils.FACIAL_LANDMARKS_IDXS["left_eye"]
+    (rStart, rEnd) = face_utils.FACIAL_LANDMARKS_IDXS["right_eye"]
+    features = shape2np(features)
+    l_eye = features[lStart:lEnd]
+    r_eye = features[rStart:rEnd]
+    return l_eye, r_eye
+"""
 
 
 face_landmark_path = 'shape_predictor_68_face_landmarks.dat'
@@ -94,7 +101,7 @@ detector = dlib.get_frontal_face_detector()
 predictor = dlib.shape_predictor(face_landmark_path)
 
 
-cam = cv2.VideoCapture("Rose.mp4")
+cam = cv2.VideoCapture(0)
 
 frame_no=0
 x=list()
@@ -154,7 +161,7 @@ TOTAL_TIME_VIDEO_SECS = TOTAL_TIME_VIDEO/60
 # 25 blinks :        , Nervous : >50% -75%
 # 30 blinks :        , Nervous : 75-100%
 
-if TOTAL_BLINK_COUNTER > TOTAL_TIME_VIDEO_SECS/4
+#if TOTAL_BLINK_COUNTER > TOTAL_TIME_VIDEO_SECS/4
 
 # Release the webcam
 cam.release()
