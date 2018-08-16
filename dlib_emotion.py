@@ -62,21 +62,10 @@ while(cap.isOpened()):
 		face_rects = detector(img, 0)
 
 		for face_rect in face_rects:
-	        x,y,w,h = rect_to_bb(face_rect)
-	        cv2.rectangle(img,(x,y),(x+w,y+h),(255,0,0),2)
-	        shape = predictor(img, face_rect)
-	        shape = face_utils.shape_to_np(shape)
-
-	        """
-					
-			
-					faces = face_cascade.detectMultiScale(gray, 1.3, 5)
-			
-					#print(faces) #locations of detected faces
-			
-					for (x,y,w,h) in faces:
-						cv2.rectangle(img,(x,y),(x+w,y+h),(255,0,0),2) #draw rectangle to main image
-			"""			
+			x,y,w,h = rect_to_bb(face_rect)
+			cv2.rectangle(img,(x,y),(x+w,y+h),(255,0,0),2)
+			shape = predictor(img, face_rect)
+			shape = face_utils.shape_to_np(shape)
 			detected_face = img[int(y):int(y+h), int(x):int(x+w)] #crop detected face
 			detected_face = cv2.cvtColor(detected_face, cv2.COLOR_BGR2GRAY) #transform to gray scale
 			detected_face = cv2.resize(detected_face, (48, 48)) #resize to 48x48
