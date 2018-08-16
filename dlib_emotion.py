@@ -58,6 +58,7 @@ while(cap.isOpened()):
 	ret, img = cap.read()
 	if ret == True:
 		#img = cv2.imread('C:/Users/IS96273/Desktop/hababam.jpg')
+		img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 		face_rects = detector(img, 0)
 
 		for face_rect in face_rects:
@@ -67,7 +68,7 @@ while(cap.isOpened()):
 	        shape = face_utils.shape_to_np(shape)
 
 	        """
-					gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+					
 			
 					faces = face_cascade.detectMultiScale(gray, 1.3, 5)
 			
