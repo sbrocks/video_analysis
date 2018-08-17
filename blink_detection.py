@@ -164,9 +164,18 @@ def face_ui(frame,features):
     cv2.line(frame, (mouth[6][0],mouth[6][1]), (nose[6][0],nose[6][1]), (127, 0, 255),1)
     cv2.line(frame, (mouth[0][0],mouth[0][1]), (mouth[9][0],mouth[9][1]), (127, 0, 255),1)
     cv2.line(frame, (mouth[6][0],mouth[6][1]), (mouth[9][0],mouth[9][1]), (127, 0, 255),1)
-    
+
     cv2.line(frame, (nose[6][0],nose[6][1]), (nose[4][0],nose[4][1]), (127, 0, 255),1)
     cv2.line(frame, (nose[6][0],nose[6][1]), (nose[8][0],nose[8][1]), (127, 0, 255),1)
+
+    # Adding transparent shapes
+    overlay = frame.copy()
+    cv2.circle(overlay, (int((right_eye[0][0]+right_eye[3][0])/2) , int((right_eye[0][1]+right_eye[3][1])/2) ), 12, (255, 255, 0), -1)
+    cv2.rectangle(overlay, (jaw[0][0]-50 , jaw[0][1]-50 ),( jaw[0][0]-200 , jaw[0][1]-100 ), (127, 255, 0), -1)
+    cv2.putText(overlay,'Emotion Recognition',( jaw[0][0]-200 , jaw[0][1]-75), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(0,147,255),1,cv2.LINE_AA)
+    opacity = 0.4
+    cv2.addWeighted(overlay, opacity, img, 1 - opacity, 0, img)
+
 
 
 
