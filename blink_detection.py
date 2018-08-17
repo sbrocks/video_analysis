@@ -149,20 +149,24 @@ def face_ui(frame,features):
     left_eye = features[leStart:leEnd]
     nose = features[nStart:nEnd]
     jaw = features[jStart:jEnd]
-    cv2.line(frame, (left_eye[0][0],left_eye[0][1]), (left_eye[2][0],left_eye[2][1]), (127, 0, 255),1)
-    cv2.line(frame, (left_eye[2][0],left_eye[2][1]), (left_eye[3][0],left_eye[3][1]), (127, 0, 255),1)
-    cv2.line(frame, (left_eye[3][0],left_eye[3][1]), (left_eye[4][0],left_eye[4][1]), (127, 0, 255),1)
-    cv2.line(frame, (left_eye[4][0],left_eye[4][1]), (left_eye[0][0],left_eye[0][1]), (127, 0, 255),1)
-    cv2.line(frame, (right_eye[0][0],right_eye[0][1]), (right_eye[1][0],right_eye[1][1]), (127, 0, 255),1)
-    cv2.line(frame, (right_eye[1][0],right_eye[1][1]), (right_eye[3][0],right_eye[3][1]), (127, 0, 255),1)
-    cv2.line(frame, (right_eye[3][0],right_eye[3][1]), (right_eye[5][0],right_eye[5][1]), (127, 0, 255),1)
-    cv2.line(frame, (right_eye[5][0],right_eye[5][1]), (right_eye[0][0],right_eye[0][1]), (127, 0, 255),1)
-    cv2.line(frame, (mouth[0][0],mouth[0][1]), (right_eye[5][0],right_eye[5][1]), (127, 0, 255),1)
-    cv2.line(frame, (mouth[6][0],mouth[6][1]), (left_eye[4][0],left_eye[4][1]), (127, 0, 255),1)
+    cv2.line(frame, (int((nose[0][0]+left_eye[0][0])/2) ,left_eye[0][1]), (left_eye[1][0],left_eye[1][1]), (127, 0, 255),1)
+    cv2.line(frame, (left_eye[1][0],left_eye[1][1]), (left_eye[3][0],left_eye[3][1]), (127, 0, 255),1)
+    cv2.line(frame, (left_eye[3][0],left_eye[3][1]), (left_eye[5][0],left_eye[5][1]), (127, 0, 255),1)
+    cv2.line(frame, (int((nose[0][0]+left_eye[0][0])/2) ,left_eye[0][1]), (left_eye[5][0],left_eye[5][1]), (127, 0, 255),1)
+    
+    cv2.line(frame, (right_eye[0][0],right_eye[0][1]), (right_eye[2][0],right_eye[2][1]), (127, 0, 255),1)
+    cv2.line(frame, (right_eye[2][0],right_eye[2][1]), (int((nose[0][0]+right_eye[3][0])/2),right_eye[3][1]), (127, 0, 255),1)
+    cv2.line(frame, (int((nose[0][0]+right_eye[3][0])/2),right_eye[3][1]), (right_eye[4][0],right_eye[4][1]), (127, 0, 255),1)
+    cv2.line(frame, (right_eye[4][0],right_eye[4][1]), (right_eye[0][0],right_eye[0][1]), (127, 0, 255),1)
+    cv2.line(frame, (mouth[0][0],mouth[0][1]), (right_eye[4][0],right_eye[4][1]), (127, 0, 255),1)
+    cv2.line(frame, (mouth[6][0],mouth[6][1]), (left_eye[5][0],left_eye[5][1]), (127, 0, 255),1)
     cv2.line(frame, (mouth[0][0],mouth[0][1]), (nose[6][0],nose[6][1]), (127, 0, 255),1)
     cv2.line(frame, (mouth[6][0],mouth[6][1]), (nose[6][0],nose[6][1]), (127, 0, 255),1)
     cv2.line(frame, (mouth[0][0],mouth[0][1]), (mouth[9][0],mouth[9][1]), (127, 0, 255),1)
     cv2.line(frame, (mouth[6][0],mouth[6][1]), (mouth[9][0],mouth[9][1]), (127, 0, 255),1)
+    
+    cv2.line(frame, (nose[6][0],nose[6][1]), (nose[4][0],nose[4][1]), (127, 0, 255),1)
+    cv2.line(frame, (nose[6][0],nose[6][1]), (nose[8][0],nose[8][1]), (127, 0, 255),1)
 
 
 
