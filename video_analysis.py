@@ -1,64 +1,276 @@
-# Importing the libraries
-import numpy as np
 import cv2
-from keras.preprocessing import image
+import sys
 import dlib
+import numpy as np
+import argparse
 from imutils import face_utils
+import imutils
+from scipy.spatial.distance import euclidean as dist
+from keras.preprocessing import image
 
-#------------------------------------------------------------------------------------------------------
-### EMOTION INITIALIZATION PART START -------------------------------------------------------------------------
-#------------------------------------------------------------------------------------------------------
-
-# Loading the OpenCV face detection HaarClassifier
-face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_alt2.xml')
-
-# Open the webcam
-cap = cv2.VideoCapture(0)
-
-""" We use cv2.VideoWriter() to save the video """
-fourcc = cv2.VideoWriter_fourcc(*'XVID')
-out = cv2.VideoWriter('emotion_shrofile.avi',fourcc,20.0,(640,480))
-
-
-
-#-----------------------------
-# Loading the facial expression recognition model
+# Loading Emotion reognition model
 from keras.models import model_from_json
 model = model_from_json(open("facial_expression_model_structure.json", "r").read())
-model.load_weights('facial_expression_model_weights.h5') 
+model.load_weights('facial_expression_model_weights.h5') #load weights
 
-#-----------------------------
+# Run this file as such 'python opencv_blink_detect.py -p sp.dat'
 
-# Initialising the emotion values
-emotion_angry = 0
-emotion_disgust = 0
-emotion_fear = 0
-emotion_happy = 0
-emotion_sad = 0
-emotion_surprise = 0
-emotion_neutral = 0
-total_frame = 0
+#Defining EAR
+##EAR is the ratio between width and height of eye
+EYE_AR_THRESH = 0.43
+EYE_AR_CONSEC_FRAMES = 1
 
-emotions = ('angry', 'disgust', 'fear', 'happy', 'sad', 'surprise', 'neutral')
+L_COUNTER = 0  # Counts number of frame left eye has been closed
+R_COUNTER = 0  # Counts number of frame right eye has been closed
 
-#---------------------------------------------------------------------------------------------------
-### EMOTION INITIALIZATION PART END ------------------------------------------------------------------------
-#---------------------------------------------------------------------------------------------------
+TOTAL_BLINK_COUNTER = 0
+L_BLINK_COUNTER = 0
+R_BLINK_COUNTER = 0
+
+#Method to convert rectanngle to Bounding Box
+def rect2bb(rect):
+    x = rect.left()
+    y = rect.top()
+    w = rect.right() - x
+    h = rect.bottom() - y
+    return x, y, w, h
+
+#Converting Shape to numpy array
+def shape2np(shape, dtype="int"):
+    coordinates = np.zeros((68, 2), dtype=dtype)
+    for i in range(0, 68):
+        coordinates[i] = (shape.part(i).x, shape.part(i).y)
+
+    return coordinates
 
 
-#---------------------------------------------------------------------------------------------------
-### HEADPOSE INITIALIZATION PART START -------------------------------------------------------------
-#---------------------------------------------------------------------------------------------------
+def draw_details(rect, shape, image):
+    #Rectangle over the face
+    (x, y, w, h) = rect2bb(rect)
+
+    #Points of the facial landmarks
+    shape = shape2np(shape)
+
+    #cv2.rectangle(image, (x, y), (x+w, y+h), (0, 255, 0), 1)
+
+    #Drawing rectangle over the face
+    #Drawing a point over each landmark
+    #for (x,y) in shape:
+        #cv2.circle(image, (x,y), 2, (0, 0, 255), -1)
+    return image
+
+
+def find_features(image):
+    image = imutils.resize(image, width=500)
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    rects = detector(gray, 1)
+    shapes = []
+    for (i, rect) in enumerate(rects):
+        shape = predictor(gray, rect)
+        shapes.append(shape)
+        image = draw_details(rect, shape, image)
+    return image, rects, shapes
+
+
+def calculate_EAR(eye):
+    if len(eye)==6:
+        width = dist(eye[0],eye[3])
+        A = dist(eye[1],eye[5])
+        B = dist(eye[2],eye[4])
+        EAR = (A+B)/width
+        return EAR
+    else:
+        print("Error in eye shape")
+        return -1
+
+def calculate_frown(l_eyebrow,r_eyebrow):
+    if len(l_eyebrow)==5 and len(r_eyebrow)==5:
+        frown_width = dist(l_eyebrow[0],r_eyebrow[4])
+        return frown_width
+    else:
+        print("Error in eyebrow shape")
+        return -1
+
+def calculate_mouth(mouth):
+    if len(mouth)==20:
+        mouth_dist = dist(mouth[14],mouth[18])
+        return mouth_dist
+    else:
+        print("Error in mouth shape")
+        return -1
+
+def calculate_enthusiasm(l_eye,r_eye,l_eyebrow,r_eyebrow):
+    if len(l_eye)==6 and len(r_eye)==6 and len(l_eyebrow)==5 and len(r_eyebrow)==5:
+        r_enthu_dist = dist(r_eye[2],r_eyebrow[3])
+        l_enthu_dist = dist(l_eye[2],l_eyebrow[3])
+        enthusiasm_dist = (r_enthu_dist+l_enthu_dist)/2.0
+        return enthusiasm_dist
+    else:
+        print("Error in eye or eyebrow shape")
+        return -1
+
+
+
+
+def get_head_pose(shape):
+    image_pts = np.float32([shape[17], shape[21], shape[22], shape[26], shape[36],
+                            shape[39], shape[42], shape[45], shape[31], shape[35],
+                            shape[48], shape[54], shape[57], shape[8]])
+    
+    _, rotation_vec, translation_vec = cv2.solvePnP(object_pts, image_pts, cam_matrix, dist_coeffs)
+
+    reprojectdst, _ = cv2.projectPoints(reprojectsrc, rotation_vec, translation_vec, cam_matrix,
+                                        dist_coeffs)
+
+    reprojectdst = tuple(map(tuple, reprojectdst.reshape(8, 2)))
+
+    # calc euler angle
+    rotation_mat, _ = cv2.Rodrigues(rotation_vec)
+    pose_mat = cv2.hconcat((rotation_mat, translation_vec))
+    _, _, _, _, _, _, euler_angle = cv2.decomposeProjectionMatrix(pose_mat)
+
+    return reprojectdst, euler_angle
+
+
+
+def get_eyes(features):
+    (lStart, lEnd) = face_utils.FACIAL_LANDMARKS_IDXS["left_eye"]
+    (rStart, rEnd) = face_utils.FACIAL_LANDMARKS_IDXS["right_eye"]
+    features = shape2np(features)
+    l_eye = features[lStart:lEnd]
+    r_eye = features[rStart:rEnd]
+    return l_eye, r_eye
+
+def get_eyebrows(features):
+    (lStart, lEnd) = face_utils.FACIAL_LANDMARKS_IDXS["left_eyebrow"]
+    (rStart, rEnd) = face_utils.FACIAL_LANDMARKS_IDXS["right_eyebrow"]
+    features = shape2np(features)
+    l_eyebrow = features[lStart:lEnd]
+    r_eyebrow = features[rStart:rEnd]
+    #print(l_eyebrow)
+    #print(r_eyebrow)
+    return l_eyebrow, r_eyebrow
+
+def get_mouth(features):
+    (mStart, mEnd) = face_utils.FACIAL_LANDMARKS_IDXS["mouth"]
+    features = shape2np(features)
+    mouth = features[mStart:mEnd]
+    #print(mouth)
+    return mouth
+
+
+def face_ui(frame,features):
+    (mStart, mEnd) = face_utils.FACIAL_LANDMARKS_IDXS["mouth"]
+    (rebStart, rebEnd) = face_utils.FACIAL_LANDMARKS_IDXS["right_eyebrow"]
+    (lebStart, lebEnd) = face_utils.FACIAL_LANDMARKS_IDXS["left_eyebrow"]
+    (reStart, reEnd) = face_utils.FACIAL_LANDMARKS_IDXS["right_eye"]
+    (leStart, leEnd) = face_utils.FACIAL_LANDMARKS_IDXS["left_eye"]
+    (nStart, nEnd) = face_utils.FACIAL_LANDMARKS_IDXS["nose"]
+    (jStart, jEnd) = face_utils.FACIAL_LANDMARKS_IDXS["jaw"]
+
+    features = shape2np(features)
+    mouth = features[mStart:mEnd]
+    right_eyebrow = features[rebStart:rebEnd]
+    left_eyebrow = features[lebStart:lebEnd]
+    right_eye = features[reStart:reEnd]
+    left_eye = features[leStart:leEnd]
+    nose = features[nStart:nEnd]
+    jaw = features[jStart:jEnd]
+    cv2.line(frame, (int((nose[0][0]+left_eye[0][0])/2) ,left_eye[0][1]), (left_eye[1][0],left_eye[1][1]), (255, 255, 255),1)
+    cv2.line(frame, (left_eye[1][0],left_eye[1][1]), (left_eye[3][0],left_eye[3][1]), (255, 255, 255),1)
+    cv2.line(frame, (left_eye[3][0],left_eye[3][1]), (left_eye[5][0],left_eye[5][1]), (255, 255, 255),1)
+    cv2.line(frame, (int((nose[0][0]+left_eye[0][0])/2) ,left_eye[0][1]), (left_eye[5][0],left_eye[5][1]), (255, 255, 255),1)
+    
+    cv2.line(frame, (right_eye[0][0],right_eye[0][1]), (right_eye[2][0],right_eye[2][1]), (255, 255, 255),1)
+    cv2.line(frame, (right_eye[2][0],right_eye[2][1]), (int((nose[0][0]+right_eye[3][0])/2),right_eye[3][1]), (255, 255, 255),1)
+    cv2.line(frame, (int((nose[0][0]+right_eye[3][0])/2),right_eye[3][1]), (right_eye[4][0],right_eye[4][1]), (255, 255, 255),1)
+    cv2.line(frame, (right_eye[4][0],right_eye[4][1]), (right_eye[0][0],right_eye[0][1]), (255, 255, 255),1)
+    cv2.line(frame, (mouth[0][0],mouth[0][1]), (right_eye[4][0],right_eye[4][1]), (255, 255, 255),1)
+    cv2.line(frame, (mouth[6][0],mouth[6][1]), (left_eye[5][0],left_eye[5][1]), (255, 255, 255),1)
+    cv2.line(frame, (mouth[0][0],mouth[0][1]), (nose[6][0],nose[6][1]), (255, 255, 255),1)
+    cv2.line(frame, (mouth[6][0],mouth[6][1]), (nose[6][0],nose[6][1]), (255, 255, 255),1)
+    cv2.line(frame, (mouth[0][0],mouth[0][1]), (mouth[9][0],mouth[9][1]), (255, 255, 255),1)
+    cv2.line(frame, (mouth[6][0],mouth[6][1]), (mouth[9][0],mouth[9][1]), (255, 255, 255),1)
+
+    cv2.line(frame, (nose[6][0],nose[6][1]), (nose[4][0],nose[4][1]), (255, 255, 255),1)
+    cv2.line(frame, (nose[6][0],nose[6][1]), (nose[8][0],nose[8][1]), (255, 255, 255),1)
+
+    ###################################################################
+    # Right
+    ###################################################################
+
+    # Adding transparent shapes
+    overlay = frame.copy()
+    #cv2.circle(overlay, (int((right_eye[0][0]+right_eye[3][0])/2) , int((right_eye[0][1]+right_eye[3][1])/2) ), 12, (255, 255, 0), -1)
+
+    # Emotion Recogniton
+    cv2.rectangle(overlay, (jaw[0][0]-50 , jaw[0][1]-50 ),( jaw[0][0]-130 , jaw[0][1]-100 ), (127, 255, 0), -1)
+    cv2.putText(overlay,"Emotion",( jaw[0][0]-115 , jaw[0][1]-80), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(0,147,255),1,cv2.LINE_AA)
+    cv2.putText(overlay,"Recognition",( jaw[0][0]-125 , jaw[0][1]-60), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(0,147,255),1,cv2.LINE_AA)
+    opacity = 0.4
+    cv2.addWeighted(overlay, opacity, img, 1 - opacity, 0, img)
+
+
+    # Speech
+    cv2.rectangle(overlay, (jaw[0][0]-50 , jaw[0][1]-10 ),( jaw[0][0]-130 , jaw[0][1]+40 ), (127, 255, 0), -1)
+    cv2.putText(overlay,"Speech",( jaw[0][0]-115 , jaw[0][1]+20), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(0,147,255),1,cv2.LINE_AA)
+    #cv2.putText(overlay,"Recognition",( jaw[0][0]-125 , jaw[0][1]-65), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(0,147,255),1,cv2.LINE_AA)
+    opacity = 0.4
+    cv2.addWeighted(overlay, opacity, img, 1 - opacity, 0, img)
+
+    # Facial Analysis
+    cv2.rectangle(overlay, (jaw[0][0]-50 , jaw[0][1]+80 ),( jaw[0][0]-130 , jaw[0][1]+130 ), (127, 255, 0), -1)
+    cv2.putText(overlay,"Facial",( jaw[0][0]-110 , jaw[0][1]+100), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(0,147,255),1,cv2.LINE_AA)
+    cv2.putText(overlay,"Analysis",( jaw[0][0]-115 , jaw[0][1]+120), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(0,147,255),1,cv2.LINE_AA)
+    opacity = 0.4
+    cv2.addWeighted(overlay, opacity, img, 1 - opacity, 0, img)
+
+
+    ###################################################################
+    # Left
+    ###################################################################
+    
+    # Smile design
+    #cv2.line(frame,(mouth[6][0],mouth[6][1]), (mouth[6][0]+50,mouth[6][1]),(127,0,255),1)
+
+    cv2.rectangle(overlay, (left_eye[3][0] +80, mouth[6][1]-15 ),( left_eye[3][0]+180 , mouth[6][1]+15 ), (127, 255, 0), -1)
+    cv2.putText(overlay,'Smile',( left_eye[3][0]+115 , mouth[6][1]+5), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(0,47,255),1,cv2.LINE_AA)
+    opacity = 0.4
+    cv2.addWeighted(overlay, opacity, img, 1 - opacity, 0, img)
+
+    # Blink
+    #cv2.line(frame,(left_eye[3][0],left_eye[3][1]), (left_eye[3][0]+50,left_eye[3][1]),(127,0,255),1)
+
+    cv2.rectangle(overlay, (left_eye[3][0] +80, left_eye[3][1]-15 ),( left_eye[3][0]+180 , left_eye[3][1]+15 ), (127, 255, 0), -1)
+    cv2.putText(overlay,'Blink',( left_eye[3][0]+115 , left_eye[3][1]+5), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(0,47,255),1,cv2.LINE_AA)
+    opacity = 0.4
+    cv2.addWeighted(overlay, opacity, img, 1 - opacity, 0, img)
+
+    # Communication
+    #cv2.line(frame,(left_eye[3][0],left_eye[3][1]), (left_eye[3][0]+50,left_eye[3][1]),(127,0,255),1)
+
+    cv2.rectangle(overlay, (left_eye[3][0] +80, left_eye[3][1]-60 ),( left_eye[3][0]+180 , left_eye[3][1]-30 ), (127, 255, 0), -1)
+    cv2.putText(overlay,'Positive',( left_eye[3][0]+105 , left_eye[3][1]-40), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(0,47,255),1,cv2.LINE_AA)
+    opacity = 0.4
+    cv2.addWeighted(overlay, opacity, img, 1 - opacity, 0, img)
+
+    # Positive Attitude
+    #cv2.line(frame,(left_eye[3][0],left_eye[3][1]), (left_eye[3][0]+50,left_eye[3][1]),(127,0,255),1)
+
+    cv2.rectangle(overlay, (left_eye[3][0] +80, mouth[6][1]+60 ),( left_eye[3][0]+180 , mouth[6][1]+30 ), (127, 255, 0), -1)
+    cv2.putText(overlay,'Communication',( left_eye[3][0]+80 , mouth[6][1]+50), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(0,47,255),1,cv2.LINE_AA)
+    opacity = 0.4
+    cv2.addWeighted(overlay, opacity, img, 1 - opacity, 0, img)
+
+
 
 face_landmark_path = 'shape_predictor_68_face_landmarks.dat'
 detector = dlib.get_frontal_face_detector()
 predictor = dlib.shape_predictor(face_landmark_path)
 
-attention = 0
-attention_perc = 0
-#num_frames = 0
-
-
+#------------------------------------------------------------------------------------------------------
+### HEAD POSE INITIALIZATION PART START -------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------
 
 K = [6.5308391993466671e+002, 0.0, 3.1950000000000000e+002,
      0.0, 6.5308391993466671e+002, 2.3950000000000000e+002,
@@ -96,166 +308,157 @@ line_pairs = [[0, 1], [1, 2], [2, 3], [3, 0],
               [4, 5], [5, 6], [6, 7], [7, 4],
               [0, 4], [1, 5], [2, 6], [3, 7]]
 
-#---------------------------------------------------------------------------------------------
-### HEADPOSE INITIALIZATION PART END ---------------------------------------------------------
-#---------------------------------------------------------------------------------------------
 
 
-#---------------------------------------------------------------------------------------------
-### HEADPOSE FUNCTIONS START -----------------------------------------------------------------
-#---------------------------------------------------------------------------------------------
+cam = cv2.VideoCapture(0)
 
-def get_head_pose(shape):
-    image_pts = np.float32([shape[17], shape[21], shape[22], shape[26], shape[36],
-                            shape[39], shape[42], shape[45], shape[31], shape[35],
-                            shape[48], shape[54], shape[57], shape[8]])
-    
-    _, rotation_vec, translation_vec = cv2.solvePnP(object_pts, image_pts, cam_matrix, dist_coeffs)
+#-----------------------------
+emotion_angry = 0
+emotion_disgust = 0
+emotion_fear = 0
+emotion_happy = 0
+emotion_sad = 0
+emotion_surprise = 0
+emotion_neutral = 0
+total_frame = 0
 
-    reprojectdst, _ = cv2.projectPoints(reprojectsrc, rotation_vec, translation_vec, cam_matrix,
-                                        dist_coeffs)
+emotions = ('angry', 'disgust', 'fear', 'happy', 'sad', 'surprise', 'neutral')
 
-    reprojectdst = tuple(map(tuple, reprojectdst.reshape(8, 2)))
+attention = 0
+attention_perc = 0
+num_frames=0
+frown_count=0
+enthusiasm_count=0
+frame_no=0
+x=list()
+y=list()
+TOTAL_TIME_VIDEO = 0
 
-    # calc euler angle
-    rotation_mat, _ = cv2.Rodrigues(rotation_vec)
-    pose_mat = cv2.hconcat((rotation_mat, translation_vec))
-    _, _, _, _, _, _, euler_angle = cv2.decomposeProjectionMatrix(pose_mat)
-
-    return reprojectdst, euler_angle
-
-def rect_to_bb(rect):
-    # take a bounding predicted by dlib and convert it
-    # to the format (x, y, w, h) as we would normally do
-    # with OpenCV
-    x = rect.left()
-    y = rect.top()
-    w = rect.right() - x
-    h = rect.bottom() - y
- 
-    # return a tuple of (x, y, w, h)
-    return (x, y, w, h)
-
-
-def main():
-    if not cap.isOpened():
-        print("Unable to connect to camera.")
-        return
-
-    while cap.isOpened():
-        ret, frame = cap.read()
+while cam.isOpened():
+    ret, img = cam.read()
+    if ret==True:
+        TOTAL_TIME_VIDEO = cam.get(cv2.CAP_PROP_POS_MSEC)
         num_frames+=1
-        if ret:
-            face_rects = detector(frame, 0)
-#
-            #if len(face_rects) > 0:
-            for face_rect in face_rects:
-                x,y,w,h = rect_to_bb(face_rect)
-                cv2.rectangle(frame,(x,y),(x+w,y+h),(255,0,0),2)
-                shape = predictor(frame, face_rect)
-                shape = face_utils.shape_to_np(shape)
+        img, rects, feature_array = find_features(img)
+        #n_faces = len(rects)
+        #print(n_faces)
+        for (i, rect) in enumerate(rects):
+            features = feature_array[i]         # Currently only calculating blink for the First face
+            l_eye, r_eye = get_eyes(features)
+            l_eyebrow,r_eyebrow = get_eyebrows(features)
+            mouth = get_mouth(features)
+            
+            # Head Pose Code
+            tx,ty,tw,th = rect2bb(rect)
+            cv2.rectangle(img,(tx,ty),(tx+tw,ty+th),(255,0,0),2)
+            h_shape = predictor(img,rect)
+            h_shape = face_utils.shape_to_np(h_shape)
+            
+            # Head Pose detector
+            reprojectdst, euler_angle = get_head_pose(h_shape)
 
-                reprojectdst, euler_angle = get_head_pose(shape)
+            # Compress to only face region
+            detected_face = img[int(y):int(y+h), int(x):int(x+w)]
+            detected_face = cv2.resize(detected_face, (48, 48))
 
-                for (x, y) in shape:
-                    cv2.circle(frame, (x, y), 1, (0, 0, 255), -1)
-
-                for start, end in line_pairs:
-                    cv2.line(frame, reprojectdst[start], reprojectdst[end], (0, 0, 255))
-
-                cv2.putText(frame, "X: " + "{:7.2f}".format(euler_angle[0, 0]), (20, 20), cv2.FONT_HERSHEY_SIMPLEX,
-                            0.75, (0, 0, 0), thickness=2)
-                cv2.putText(frame, "Y: " + "{:7.2f}".format(euler_angle[1, 0]), (20, 50), cv2.FONT_HERSHEY_SIMPLEX,
-                            0.75, (0, 0, 0), thickness=2)
-                cv2.putText(frame, "Z: " + "{:7.2f}".format(euler_angle[2, 0]), (20, 80), cv2.FONT_HERSHEY_SIMPLEX,
-                            0.75, (0, 0, 0), thickness=2)
-                #print("{:2.2f}".format(abs(euler_angle[1, 0])))
-                if round(abs(euler_angle[0,0]))<=20.0 and round(abs(euler_angle[1,0]))<=20.0:
-                    attention+=1
-
-            cv2.imshow("demo", frame)
-
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
-
-
-
-#---------------------------------------------------------------------------------------------
-### HEADPOSE FUNCTIONS END -------------------------------------------------------------------
-#---------------------------------------------------------------------------------------------
+            img_pixels = image.img_to_array(detected_face)
+            img_pixels = np.expand_dims(img_pixels, axis = 0)
+            
+            img_pixels /= 255 #pixels are in scale of [0, 255]. normalize all pixels in scale of [0, 1]
+            
+            predictions = model.predict(img_pixels) #store probabilities of 7 expressions
+            
+            #find max indexed array 0: angry, 1:disgust, 2:fear, 3:happy, 4:sad, 5:surprise, 6:neutral
+            max_index = np.argmax(predictions[0])
+            
+            emotion = emotions[max_index]
+            
+            #write emotion text above rectangle
+            cv2.putText(img, emotion, (int(x), int(y)), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
 
 
-#---------------------------------------------------------------------------------------------
-### MAIN CAMERA PROCESSING -------------------------------------------------------------------
-#---------------------------------------------------------------------------------------------
+            # Make UI for Face
+            face_ui(img,features)
 
-while(cap.isOpened()):
-	ret, img = cap.read()
-	if ret == True:
-		#img = cv2.imread('C:/Users/IS96273/Desktop/hababam.jpg')
-		gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            l_EAR = calculate_EAR(l_eye)
+            r_EAR = calculate_EAR(r_eye)
 
-		faces = face_cascade.detectMultiScale(gray, 1.3, 5)
+            frown_dist = calculate_frown(l_eyebrow,r_eyebrow)
+            mouth_dist = calculate_mouth(mouth)
+            enthusiasm_dist = calculate_enthusiasm(l_eye,r_eye,l_eyebrow,r_eyebrow)
 
-		#print(faces) #locations of detected faces
+            if round(abs(euler_angle[0,0]))<=20.0 and round(abs(euler_angle[1,0]))<=20.0:
+                attention+=1
 
-		for (x,y,w,h) in faces:
-			cv2.rectangle(img,(x,y),(x+w,y+h),(255,0,0),2) #draw rectangle to main image
-			
-			detected_face = img[int(y):int(y+h), int(x):int(x+w)] #crop detected face
-			detected_face = cv2.cvtColor(detected_face, cv2.COLOR_BGR2GRAY) #transform to gray scale
-			detected_face = cv2.resize(detected_face, (48, 48)) #resize to 48x48
-			
-			img_pixels = image.img_to_array(detected_face)
-			img_pixels = np.expand_dims(img_pixels, axis = 0)
-			
-			img_pixels /= 255 #pixels are in scale of [0, 255]. normalize all pixels in scale of [0, 1]
-			
-			predictions = model.predict(img_pixels) #store probabilities of 7 expressions
-			
-			#find max indexed array 0: angry, 1:disgust, 2:fear, 3:happy, 4:sad, 5:surprise, 6:neutral
-			max_index = np.argmax(predictions[0])
-			
-			emotion = emotions[max_index]
-			
-			#write emotion text above rectangle
-			cv2.putText(img, emotion, (int(x), int(y)), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
-			if emotion == "angry":
-				emotion_angry+=1
-			elif emotion == "sad":
-				emotion_sad+=1
-			elif emotion == "neutral":
-				emotion_neutral+=1
-			elif emotion == "surprise":
-				emotion_surprise+=1
-			elif emotion == "happy":
-				emotion_happy+=1
-			elif emotion == "fear":
-				emotion_fear+=1
-			elif emotion == "disgust":
-				emotion_disgust+=1
-			else:
-				pass
-			#process on detected face end
-			#-------------------------
+            #print("Enthusiasm:"+str(enthusiasm_dist))
+            if mouth_dist<12.0 and enthusiasm_dist>20.0:
+                enthusiasm_count+=1
 
-		out.write(img)
-		cv2.imshow('img',img)
-		total_frame+=1
-		if cv2.waitKey(1) & 0xFF == ord('q'): #press q to quit
-			break
+            #print("Frown Dist:"+str(frown_dist))
+            if frown_dist < 16.0:
+                frown_count+=1
 
-	else:
-		break
+            L_COUNTER += l_EAR <= EYE_AR_THRESH
+            R_COUNTER += r_EAR <= EYE_AR_THRESH
+
+            eye_aspect_ratio = (l_EAR+r_EAR)/2.0
+            #print(eye_aspect_ratio)
+            if L_COUNTER == EYE_AR_CONSEC_FRAMES:
+                L_COUNTER = 0
+                TOTAL_BLINK_COUNTER += 1  # Blink has been Detected in the Left eye
+                L_BLINK_COUNTER += 1
+            if R_COUNTER == EYE_AR_CONSEC_FRAMES:
+                R_COUNTER = 0
+                TOTAL_BLINK_COUNTER += 1  # Blink has been Detected in the  Right eye
+                R_BLINK_COUNTER += 1
+
+
+            # Emotion calculator
+            if emotion == "angry":
+                emotion_angry+=1
+            elif emotion == "sad":
+                emotion_sad+=1
+            elif emotion == "neutral":
+                emotion_neutral+=1
+            elif emotion == "surprise":
+                emotion_surprise+=1
+            elif emotion == "happy":
+                emotion_happy+=1
+            elif emotion == "fear":
+                emotion_fear+=1
+            elif emotion == "disgust":
+                emotion_disgust+=1
+            else:
+                pass
+
+
+            
+            cv2.putText(img, "Blinks: {} , {} ".format(L_BLINK_COUNTER, R_BLINK_COUNTER), (10, 30),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+            cv2.putText(img, "EAR: {:.2f} , {:.2f} ".format(l_EAR,r_EAR), (300, 30),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+            x.append(frame_no);
+            y.append(l_EAR);
+        cv2.imshow('my webcam', img)
+        waitKey = cv2.waitKey(1)
+        if waitKey == 27: #Escape clicked.Exit program
+            break
+        elif waitKey == 114:#'R' Clicked.Reset Counter 
+            L_BLINK_COUNTER = 0
+            R_BLINK_COUNTER = 0
+    else:
+        break
+
+
 
 # Percentage calculations
-angry_percentage = (emotion_angry/total_frame)*100
-sad_percentage = (emotion_sad/total_frame)*100
-happy_percentage = (emotion_happy/total_frame)*100
-surprise_percentage = (emotion_surprise/total_frame)*100
-disgust_percentage = (emotion_disgust/total_frame)*100
-fear_percentage = (emotion_fear/total_frame)*100
-neutral_percentage = (emotion_neutral/total_frame)*100  
+angry_percentage = (emotion_angry/num_frame)*100
+sad_percentage = (emotion_sad/num_frame)*100
+happy_percentage = (emotion_happy/num_frame)*100
+surprise_percentage = (emotion_surprise/num_frame)*100
+disgust_percentage = (emotion_disgust/num_frame)*100
+fear_percentage = (emotion_fear/num_frame)*100
+neutral_percentage = (emotion_neutral/num_frame)*100  
 
 print("Angry: "+str(angry_percentage))
 print("Sad: "+str(sad_percentage))
@@ -265,11 +468,30 @@ print("Disgust: "+str(disgust_percentage))
 print("Fear: "+str(fear_percentage))
 print("Neutral: "+str(neutral_percentage))
 
-attention_perc=round((attention/total_frame)*100,2)
-print("Attentive:"+str(attention_perc)+"%")
 
+# Frown Calculations
+print("Frown Percentage: "+str(round((frown_count/num_frames*100),2))+"%")
+print("Enthusiasm Percentage: "+str(round((enthusiasm_count/num_frames*100),2))+"%")
+attention_perc=round((attention/num_frames)*100,2)
+print("Attentive:"+str(attention_perc)+"%")
+# Blink Calculations
+TOTAL_TIME_VIDEO_SECS = int(TOTAL_TIME_VIDEO/1000)
+TOTAL_BLINK_COUNTER = int(TOTAL_BLINK_COUNTER/2)
+#print(TOTAL_BLINK_COUNTER)
+#print(TOTAL_TIME_VIDEO_SECS)
+
+TOTAL_TIME_VIDEO_MINS = TOTAL_TIME_VIDEO_SECS/60
+TOTAL_TIME_VIDEO_EXTRA_SECS = TOTAL_TIME_VIDEO_SECS%60
+
+# Ideal Blinking Rate is 15-20 blinks (per minute)
+# 15 blinks : Normal , Nervous : Very low
+# 20 blinks :        , Nervous : 25-40%
+# 25 blinks :        , Nervous : >50% -75%
+# 30 blinks :        , Nervous : 75-100%
+
+#if TOTAL_BLINK_COUNTER > TOTAL_TIME_VIDEO_SECS/4
 
 # Release the webcam
-cap.release()
-out.release()
+cam.release()
 cv2.destroyAllWindows()
+
