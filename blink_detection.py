@@ -45,12 +45,12 @@ def draw_details(rect, shape, image):
     #Points of the facial landmarks
     shape = shape2np(shape)
 
-    cv2.rectangle(image, (x, y), (x+w, y+h), (0, 255, 0), 1)
+    #cv2.rectangle(image, (x, y), (x+w, y+h), (0, 255, 0), 1)
 
     #Drawing rectangle over the face
     #Drawing a point over each landmark
-    for (x,y) in shape:
-        cv2.circle(image, (x,y), 2, (0, 0, 255), -1)
+    #for (x,y) in shape:
+        #cv2.circle(image, (x,y), 2, (0, 0, 255), -1)
     return image
 
 
@@ -149,33 +149,91 @@ def face_ui(frame,features):
     left_eye = features[leStart:leEnd]
     nose = features[nStart:nEnd]
     jaw = features[jStart:jEnd]
-    cv2.line(frame, (int((nose[0][0]+left_eye[0][0])/2) ,left_eye[0][1]), (left_eye[1][0],left_eye[1][1]), (127, 0, 255),1)
-    cv2.line(frame, (left_eye[1][0],left_eye[1][1]), (left_eye[3][0],left_eye[3][1]), (127, 0, 255),1)
-    cv2.line(frame, (left_eye[3][0],left_eye[3][1]), (left_eye[5][0],left_eye[5][1]), (127, 0, 255),1)
-    cv2.line(frame, (int((nose[0][0]+left_eye[0][0])/2) ,left_eye[0][1]), (left_eye[5][0],left_eye[5][1]), (127, 0, 255),1)
+    cv2.line(frame, (int((nose[0][0]+left_eye[0][0])/2) ,left_eye[0][1]), (left_eye[1][0],left_eye[1][1]), (255, 255, 255),1)
+    cv2.line(frame, (left_eye[1][0],left_eye[1][1]), (left_eye[3][0],left_eye[3][1]), (255, 255, 255),1)
+    cv2.line(frame, (left_eye[3][0],left_eye[3][1]), (left_eye[5][0],left_eye[5][1]), (255, 255, 255),1)
+    cv2.line(frame, (int((nose[0][0]+left_eye[0][0])/2) ,left_eye[0][1]), (left_eye[5][0],left_eye[5][1]), (255, 255, 255),1)
     
-    cv2.line(frame, (right_eye[0][0],right_eye[0][1]), (right_eye[2][0],right_eye[2][1]), (127, 0, 255),1)
-    cv2.line(frame, (right_eye[2][0],right_eye[2][1]), (int((nose[0][0]+right_eye[3][0])/2),right_eye[3][1]), (127, 0, 255),1)
-    cv2.line(frame, (int((nose[0][0]+right_eye[3][0])/2),right_eye[3][1]), (right_eye[4][0],right_eye[4][1]), (127, 0, 255),1)
-    cv2.line(frame, (right_eye[4][0],right_eye[4][1]), (right_eye[0][0],right_eye[0][1]), (127, 0, 255),1)
-    cv2.line(frame, (mouth[0][0],mouth[0][1]), (right_eye[4][0],right_eye[4][1]), (127, 0, 255),1)
-    cv2.line(frame, (mouth[6][0],mouth[6][1]), (left_eye[5][0],left_eye[5][1]), (127, 0, 255),1)
-    cv2.line(frame, (mouth[0][0],mouth[0][1]), (nose[6][0],nose[6][1]), (127, 0, 255),1)
-    cv2.line(frame, (mouth[6][0],mouth[6][1]), (nose[6][0],nose[6][1]), (127, 0, 255),1)
-    cv2.line(frame, (mouth[0][0],mouth[0][1]), (mouth[9][0],mouth[9][1]), (127, 0, 255),1)
-    cv2.line(frame, (mouth[6][0],mouth[6][1]), (mouth[9][0],mouth[9][1]), (127, 0, 255),1)
+    cv2.line(frame, (right_eye[0][0],right_eye[0][1]), (right_eye[2][0],right_eye[2][1]), (255, 255, 255),1)
+    cv2.line(frame, (right_eye[2][0],right_eye[2][1]), (int((nose[0][0]+right_eye[3][0])/2),right_eye[3][1]), (255, 255, 255),1)
+    cv2.line(frame, (int((nose[0][0]+right_eye[3][0])/2),right_eye[3][1]), (right_eye[4][0],right_eye[4][1]), (255, 255, 255),1)
+    cv2.line(frame, (right_eye[4][0],right_eye[4][1]), (right_eye[0][0],right_eye[0][1]), (255, 255, 255),1)
+    cv2.line(frame, (mouth[0][0],mouth[0][1]), (right_eye[4][0],right_eye[4][1]), (255, 255, 255),1)
+    cv2.line(frame, (mouth[6][0],mouth[6][1]), (left_eye[5][0],left_eye[5][1]), (255, 255, 255),1)
+    cv2.line(frame, (mouth[0][0],mouth[0][1]), (nose[6][0],nose[6][1]), (255, 255, 255),1)
+    cv2.line(frame, (mouth[6][0],mouth[6][1]), (nose[6][0],nose[6][1]), (255, 255, 255),1)
+    cv2.line(frame, (mouth[0][0],mouth[0][1]), (mouth[9][0],mouth[9][1]), (255, 255, 255),1)
+    cv2.line(frame, (mouth[6][0],mouth[6][1]), (mouth[9][0],mouth[9][1]), (255, 255, 255),1)
 
-    cv2.line(frame, (nose[6][0],nose[6][1]), (nose[4][0],nose[4][1]), (127, 0, 255),1)
-    cv2.line(frame, (nose[6][0],nose[6][1]), (nose[8][0],nose[8][1]), (127, 0, 255),1)
+    cv2.line(frame, (nose[6][0],nose[6][1]), (nose[4][0],nose[4][1]), (255, 255, 255),1)
+    cv2.line(frame, (nose[6][0],nose[6][1]), (nose[8][0],nose[8][1]), (255, 255, 255),1)
+
+    ###################################################################
+    # Right
+    ###################################################################
 
     # Adding transparent shapes
     overlay = frame.copy()
-    cv2.circle(overlay, (int((right_eye[0][0]+right_eye[3][0])/2) , int((right_eye[0][1]+right_eye[3][1])/2) ), 12, (255, 255, 0), -1)
-    cv2.rectangle(overlay, (jaw[0][0]-50 , jaw[0][1]-50 ),( jaw[0][0]-200 , jaw[0][1]-100 ), (127, 255, 0), -1)
-    cv2.putText(overlay,'Emotion Recognition',( jaw[0][0]-200 , jaw[0][1]-75), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(0,147,255),1,cv2.LINE_AA)
+    #cv2.circle(overlay, (int((right_eye[0][0]+right_eye[3][0])/2) , int((right_eye[0][1]+right_eye[3][1])/2) ), 12, (255, 255, 0), -1)
+
+    # Emotion Recogniton
+    cv2.rectangle(overlay, (jaw[0][0]-50 , jaw[0][1]-50 ),( jaw[0][0]-130 , jaw[0][1]-100 ), (127, 255, 0), -1)
+    cv2.putText(overlay,"Emotion",( jaw[0][0]-115 , jaw[0][1]-80), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(0,147,255),1,cv2.LINE_AA)
+    cv2.putText(overlay,"Recognition",( jaw[0][0]-125 , jaw[0][1]-60), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(0,147,255),1,cv2.LINE_AA)
     opacity = 0.4
     cv2.addWeighted(overlay, opacity, img, 1 - opacity, 0, img)
 
+
+    # Speech
+    cv2.rectangle(overlay, (jaw[0][0]-50 , jaw[0][1]-10 ),( jaw[0][0]-130 , jaw[0][1]+40 ), (127, 255, 0), -1)
+    cv2.putText(overlay,"Speech",( jaw[0][0]-115 , jaw[0][1]+20), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(0,147,255),1,cv2.LINE_AA)
+    #cv2.putText(overlay,"Recognition",( jaw[0][0]-125 , jaw[0][1]-65), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(0,147,255),1,cv2.LINE_AA)
+    opacity = 0.4
+    cv2.addWeighted(overlay, opacity, img, 1 - opacity, 0, img)
+
+    # Facial Analysis
+    cv2.rectangle(overlay, (jaw[0][0]-50 , jaw[0][1]+80 ),( jaw[0][0]-130 , jaw[0][1]+130 ), (127, 255, 0), -1)
+    cv2.putText(overlay,"Facial",( jaw[0][0]-110 , jaw[0][1]+100), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(0,147,255),1,cv2.LINE_AA)
+    cv2.putText(overlay,"Analysis",( jaw[0][0]-115 , jaw[0][1]+120), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(0,147,255),1,cv2.LINE_AA)
+    opacity = 0.4
+    cv2.addWeighted(overlay, opacity, img, 1 - opacity, 0, img)
+
+
+    ###################################################################
+    # Left
+    ###################################################################
+    
+    # Smile design
+    #cv2.line(frame,(mouth[6][0],mouth[6][1]), (mouth[6][0]+50,mouth[6][1]),(127,0,255),1)
+
+    cv2.rectangle(overlay, (left_eye[3][0] +80, mouth[6][1]-15 ),( left_eye[3][0]+180 , mouth[6][1]+15 ), (127, 255, 0), -1)
+    cv2.putText(overlay,'Smile',( left_eye[3][0]+115 , mouth[6][1]+5), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(0,47,255),1,cv2.LINE_AA)
+    opacity = 0.4
+    cv2.addWeighted(overlay, opacity, img, 1 - opacity, 0, img)
+
+    # Blink
+    #cv2.line(frame,(left_eye[3][0],left_eye[3][1]), (left_eye[3][0]+50,left_eye[3][1]),(127,0,255),1)
+
+    cv2.rectangle(overlay, (left_eye[3][0] +80, left_eye[3][1]-15 ),( left_eye[3][0]+180 , left_eye[3][1]+15 ), (127, 255, 0), -1)
+    cv2.putText(overlay,'Blink',( left_eye[3][0]+115 , left_eye[3][1]+5), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(0,47,255),1,cv2.LINE_AA)
+    opacity = 0.4
+    cv2.addWeighted(overlay, opacity, img, 1 - opacity, 0, img)
+
+    # Communication
+    #cv2.line(frame,(left_eye[3][0],left_eye[3][1]), (left_eye[3][0]+50,left_eye[3][1]),(127,0,255),1)
+
+    cv2.rectangle(overlay, (left_eye[3][0] +80, left_eye[3][1]-60 ),( left_eye[3][0]+180 , left_eye[3][1]-30 ), (127, 255, 0), -1)
+    cv2.putText(overlay,'Positive',( left_eye[3][0]+105 , left_eye[3][1]-40), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(0,47,255),1,cv2.LINE_AA)
+    opacity = 0.4
+    cv2.addWeighted(overlay, opacity, img, 1 - opacity, 0, img)
+
+    # Positive Attitude
+    #cv2.line(frame,(left_eye[3][0],left_eye[3][1]), (left_eye[3][0]+50,left_eye[3][1]),(127,0,255),1)
+
+    cv2.rectangle(overlay, (left_eye[3][0] +80, mouth[6][1]+60 ),( left_eye[3][0]+180 , mouth[6][1]+30 ), (127, 255, 0), -1)
+    cv2.putText(overlay,'Communication',( left_eye[3][0]+80 , mouth[6][1]+50), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(0,47,255),1,cv2.LINE_AA)
+    opacity = 0.4
+    cv2.addWeighted(overlay, opacity, img, 1 - opacity, 0, img)
 
 
 
@@ -184,7 +242,7 @@ detector = dlib.get_frontal_face_detector()
 predictor = dlib.shape_predictor(face_landmark_path)
 
 
-cam = cv2.VideoCapture(0)
+cam = cv2.VideoCapture("Rose.mp4")
 
 num_frames=0
 frown_count=0
@@ -194,64 +252,65 @@ x=list()
 y=list()
 TOTAL_TIME_VIDEO = 0
 
-while True:
+while cam.isOpened():
     ret, img = cam.read()
-    TOTAL_TIME_VIDEO = cam.get(cv2.CAP_PROP_POS_MSEC)
-    num_frames+=1
-    img, rects, feature_array = find_features(img)
-    n_faces = len(rects)
-    if n_faces!=0:
-        features = feature_array[0]         # Currently only calculating blink for the First face
-        l_eye, r_eye = get_eyes(features)
-        l_eyebrow,r_eyebrow = get_eyebrows(features)
-        mouth = get_mouth(features)
-        
-        # Make UI for Face
-        face_ui(img,features)
+    if ret==True:
+        TOTAL_TIME_VIDEO = cam.get(cv2.CAP_PROP_POS_MSEC)
+        num_frames+=1
+        img, rects, feature_array = find_features(img)
+        n_faces = len(rects)
+        if n_faces!=0:
+            features = feature_array[0]         # Currently only calculating blink for the First face
+            l_eye, r_eye = get_eyes(features)
+            l_eyebrow,r_eyebrow = get_eyebrows(features)
+            mouth = get_mouth(features)
+            
+            # Make UI for Face
+            face_ui(img,features)
 
-        l_EAR = calculate_EAR(l_eye)
-        r_EAR = calculate_EAR(r_eye)
+            l_EAR = calculate_EAR(l_eye)
+            r_EAR = calculate_EAR(r_eye)
 
-        frown_dist = calculate_frown(l_eyebrow,r_eyebrow)
-        mouth_dist = calculate_mouth(mouth)
-        enthusiasm_dist = calculate_enthusiasm(l_eye,r_eye,l_eyebrow,r_eyebrow)
+            frown_dist = calculate_frown(l_eyebrow,r_eyebrow)
+            mouth_dist = calculate_mouth(mouth)
+            enthusiasm_dist = calculate_enthusiasm(l_eye,r_eye,l_eyebrow,r_eyebrow)
 
-        #print("Enthusiasm:"+str(enthusiasm_dist))
-        if mouth_dist<12.0 and enthusiasm_dist>20.0:
-            enthusiasm_count+=1
+            #print("Enthusiasm:"+str(enthusiasm_dist))
+            if mouth_dist<12.0 and enthusiasm_dist>20.0:
+                enthusiasm_count+=1
 
-        #print("Frown Dist:"+str(frown_dist))
-        if frown_dist < 16.0:
-            frown_count+=1
+            #print("Frown Dist:"+str(frown_dist))
+            if frown_dist < 16.0:
+                frown_count+=1
 
-        L_COUNTER += l_EAR <= EYE_AR_THRESH
-        R_COUNTER += r_EAR <= EYE_AR_THRESH
+            L_COUNTER += l_EAR <= EYE_AR_THRESH
+            R_COUNTER += r_EAR <= EYE_AR_THRESH
 
-        eye_aspect_ratio = (l_EAR+r_EAR)/2.0
-        #print(eye_aspect_ratio)
-        if L_COUNTER == EYE_AR_CONSEC_FRAMES:
-            L_COUNTER = 0
-            TOTAL_BLINK_COUNTER += 1  # Blink has been Detected in the Left eye
-            L_BLINK_COUNTER += 1
-        if R_COUNTER == EYE_AR_CONSEC_FRAMES:
-            R_COUNTER = 0
-            TOTAL_BLINK_COUNTER += 1  # Blink has been Detected in the  Right eye
-            R_BLINK_COUNTER += 1
+            eye_aspect_ratio = (l_EAR+r_EAR)/2.0
+            #print(eye_aspect_ratio)
+            if L_COUNTER == EYE_AR_CONSEC_FRAMES:
+                L_COUNTER = 0
+                TOTAL_BLINK_COUNTER += 1  # Blink has been Detected in the Left eye
+                L_BLINK_COUNTER += 1
+            if R_COUNTER == EYE_AR_CONSEC_FRAMES:
+                R_COUNTER = 0
+                TOTAL_BLINK_COUNTER += 1  # Blink has been Detected in the  Right eye
+                R_BLINK_COUNTER += 1
 
-        
-        cv2.putText(img, "Blinks: {} , {} ".format(L_BLINK_COUNTER, R_BLINK_COUNTER), (10, 30),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
-        cv2.putText(img, "EAR: {:.2f} , {:.2f} ".format(l_EAR,r_EAR), (300, 30),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
-        x.append(frame_no);
-        y.append(l_EAR);
-    cv2.imshow('my webcam', img)
-    waitKey = cv2.waitKey(1)
-    if waitKey == 27: #Escape clicked.Exit program
-        break
-    elif waitKey == 114:#'R' Clicked.Reset Counter 
-        L_BLINK_COUNTER = 0
-        R_BLINK_COUNTER = 0
+            
+            cv2.putText(img, "Blinks: {} , {} ".format(L_BLINK_COUNTER, R_BLINK_COUNTER), (10, 30),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+            cv2.putText(img, "EAR: {:.2f} , {:.2f} ".format(l_EAR,r_EAR), (300, 30),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+            x.append(frame_no);
+            y.append(l_EAR);
+        cv2.imshow('my webcam', img)
+        waitKey = cv2.waitKey(1)
+        if waitKey == 27: #Escape clicked.Exit program
+            break
+        elif waitKey == 114:#'R' Clicked.Reset Counter 
+            L_BLINK_COUNTER = 0
+            R_BLINK_COUNTER = 0
 
 
 # Frown Calculations
