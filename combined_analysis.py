@@ -104,7 +104,28 @@ def calculate_enthusiasm(l_eye,r_eye,l_eyebrow,r_eyebrow):
         return -1
 
 
+
+
+def get_head_pose(shape):
+    image_pts = np.float32([shape[17], shape[21], shape[22], shape[26], shape[36],
+                            shape[39], shape[42], shape[45], shape[31], shape[35],
+                            shape[48], shape[54], shape[57], shape[8]])
     
+    _, rotation_vec, translation_vec = cv2.solvePnP(object_pts, image_pts, cam_matrix, dist_coeffs)
+
+    reprojectdst, _ = cv2.projectPoints(reprojectsrc, rotation_vec, translation_vec, cam_matrix,
+                                        dist_coeffs)
+
+    reprojectdst = tuple(map(tuple, reprojectdst.reshape(8, 2)))
+
+    # calc euler angle
+    rotation_mat, _ = cv2.Rodrigues(rotation_vec)
+    pose_mat = cv2.hconcat((rotation_mat, translation_vec))
+    _, _, _, _, _, _, euler_angle = cv2.decomposeProjectionMatrix(pose_mat)
+
+    return reprojectdst, euler_angle
+
+
 
 def get_eyes(features):
     (lStart, lEnd) = face_utils.FACIAL_LANDMARKS_IDXS["left_eye"]
@@ -241,9 +262,52 @@ face_landmark_path = 'shape_predictor_68_face_landmarks.dat'
 detector = dlib.get_frontal_face_detector()
 predictor = dlib.shape_predictor(face_landmark_path)
 
+#------------------------------------------------------------------------------------------------------
+### HEAD POSE INITIALIZATION PART START -------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------
+
+K = [6.5308391993466671e+002, 0.0, 3.1950000000000000e+002,
+     0.0, 6.5308391993466671e+002, 2.3950000000000000e+002,
+     0.0, 0.0, 1.0]
+D = [7.0834633684407095e-002, 6.9140193737175351e-002, 0.0, 0.0, -1.3073460323689292e+000]
+
+cam_matrix = np.array(K).reshape(3, 3).astype(np.float32)
+dist_coeffs = np.array(D).reshape(5, 1).astype(np.float32)
+
+object_pts = np.float32([[6.825897, 6.760612, 4.402142],
+                         [1.330353, 7.122144, 6.903745],
+                         [-1.330353, 7.122144, 6.903745],
+                         [-6.825897, 6.760612, 4.402142],
+                         [5.311432, 5.485328, 3.987654],
+                         [1.789930, 5.393625, 4.413414],
+                         [-1.789930, 5.393625, 4.413414],
+                         [-5.311432, 5.485328, 3.987654],
+                         [2.005628, 1.409845, 6.165652],
+                         [-2.005628, 1.409845, 6.165652],
+                         [2.774015, -2.080775, 5.048531],
+                         [-2.774015, -2.080775, 5.048531],
+                         [0.000000, -3.116408, 6.097667],
+                         [0.000000, -7.415691, 4.070434]])
+
+reprojectsrc = np.float32([[10.0, 10.0, 10.0],
+                           [10.0, 10.0, -10.0],
+                           [10.0, -10.0, -10.0],
+                           [10.0, -10.0, 10.0],
+                           [-10.0, 10.0, 10.0],
+                           [-10.0, 10.0, -10.0],
+                           [-10.0, -10.0, -10.0],
+                           [-10.0, -10.0, 10.0]])
+
+line_pairs = [[0, 1], [1, 2], [2, 3], [3, 0],
+              [4, 5], [5, 6], [6, 7], [7, 4],
+              [0, 4], [1, 5], [2, 6], [3, 7]]
+
+
 
 cam = cv2.VideoCapture(0)
 
+attention = 0
+attention_perc = 0
 num_frames=0
 frown_count=0
 enthusiasm_count=0
@@ -258,14 +322,23 @@ while cam.isOpened():
         TOTAL_TIME_VIDEO = cam.get(cv2.CAP_PROP_POS_MSEC)
         num_frames+=1
         img, rects, feature_array = find_features(img)
-        n_faces = len(rects)
-        print(n_faces)
+        #n_faces = len(rects)
+        #print(n_faces)
         for (i, rect) in enumerate(rects):
             features = feature_array[i]         # Currently only calculating blink for the First face
             l_eye, r_eye = get_eyes(features)
             l_eyebrow,r_eyebrow = get_eyebrows(features)
             mouth = get_mouth(features)
             
+            # Head Pose Code
+            tx,ty,tw,th = rect2bb(rect)
+            cv2.rectangle(img,(tx,ty),(tx+tw,ty+th),(255,0,0),2)
+            h_shape = predictor(img,rect)
+            h_shape = face_utils.shape_to_np(h_shape)
+            reprojectdst, euler_angle = get_head_pose(h_shape)
+
+
+
             # Make UI for Face
             face_ui(img,features)
 
@@ -275,6 +348,9 @@ while cam.isOpened():
             frown_dist = calculate_frown(l_eyebrow,r_eyebrow)
             mouth_dist = calculate_mouth(mouth)
             enthusiasm_dist = calculate_enthusiasm(l_eye,r_eye,l_eyebrow,r_eyebrow)
+
+            if round(abs(euler_angle[0,0]))<=20.0 and round(abs(euler_angle[1,0]))<=20.0:
+                attention+=1
 
             #print("Enthusiasm:"+str(enthusiasm_dist))
             if mouth_dist<12.0 and enthusiasm_dist>20.0:
@@ -319,7 +395,8 @@ while cam.isOpened():
 # Frown Calculations
 print("Frown Percentage: "+str(round((frown_count/num_frames*100),2))+"%")
 print("Enthusiasm Percentage: "+str(round((enthusiasm_count/num_frames*100),2))+"%")
-
+attention_perc=round((attention/num_frames)*100,2)
+print("Attentive:"+str(attention_perc)+"%")
 # Blink Calculations
 TOTAL_TIME_VIDEO_SECS = int(TOTAL_TIME_VIDEO/1000)
 TOTAL_BLINK_COUNTER = int(TOTAL_BLINK_COUNTER/2)
