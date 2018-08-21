@@ -259,7 +259,7 @@ while cam.isOpened():
         num_frames+=1
         img, rects, feature_array = find_features(img)
         n_faces = len(rects)
-        print(n_faces)
+        #print(n_faces)
         for (i, rect) in enumerate(rects):
             features = feature_array[i]         # Currently only calculating blink for the First face
             l_eye, r_eye = get_eyes(features)
