@@ -152,6 +152,56 @@ def get_mouth(features):
     #print(mouth)
     return mouth
 
+def convert_arc(pt1, pt2, sagitta):
+
+    # extract point coordinates
+    x1, y1 = pt1
+    x2, y2 = pt2
+
+    # find normal from midpoint, follow by length sagitta
+    n = np.array([y2 - y1, x1 - x2])
+    n_dist = np.sqrt(np.sum(n**2))
+
+    if np.isclose(n_dist, 0):
+        # catch error here, d(pt1, pt2) ~ 0
+        print('Error: The distance between pt1 and pt2 is too small.')
+
+    n = n/n_dist
+    x3, y3 = (np.array(pt1) + np.array(pt2))/2 + sagitta * n
+
+    # calculate the circle from three points
+    # see https://math.stackexchange.com/a/1460096/246399
+    A = np.array([
+        [x1**2 + y1**2, x1, y1, 1],
+        [x2**2 + y2**2, x2, y2, 1],
+        [x3**2 + y3**2, x3, y3, 1]])
+    M11 = np.linalg.det(A[:, (1, 2, 3)])
+    M12 = np.linalg.det(A[:, (0, 2, 3)])
+    M13 = np.linalg.det(A[:, (0, 1, 3)])
+    M14 = np.linalg.det(A[:, (0, 1, 2)])
+
+    if np.isclose(M11, 0):
+        # catch error here, the points are collinear (sagitta ~ 0)
+        print('Error: The third point is collinear.')
+
+    cx = 0.5 * M12/M11
+    cy = -0.5 * M13/M11
+    radius = np.sqrt(cx**2 + cy**2 + M14/M11)
+
+    # calculate angles of pt1 and pt2 from center of circle
+    pt1_angle = 180*np.arctan2(y1 - cy, x1 - cx)/np.pi
+    pt2_angle = 180*np.arctan2(y2 - cy, x2 - cx)/np.pi
+
+    return (cx, cy), radius, pt1_angle, pt2_angle
+
+def draw_ellipse(img, center, axes, angle,startAngle, endAngle, color,thickness=1, lineType=cv2.LINE_AA, shift=10):
+    # uses the shift to accurately get sub-pixel resolution for arc
+    # taken from https://stackoverflow.com/a/44892317/5087436
+    center = (int(round(center[0] * 2**shift)),int(round(center[1] * 2**shift)))
+    axes = (int(round(axes[0] * 2**shift)), int(round(axes[1] * 2**shift)))
+    return cv2.ellipse(img, center, axes, angle, startAngle, endAngle, color, thickness, lineType, shift)
+
+
 
 def face_ui(frame,features):
     (mStart, mEnd) = face_utils.FACIAL_LANDMARKS_IDXS["mouth"]
@@ -172,10 +222,12 @@ def face_ui(frame,features):
     jaw = features[jStart:jEnd]
     
     #cv2.line(frame, (), (), (255, 255, 255),1)
-    cv2.line(frame, (jaw[8][0],jaw[8][1]), (jaw[8][0],nose[0][1]-30), (255, 255, 255),2)
-    cv2.line(frame,(jaw[8][0]-3,nose[0][1]-25),(jaw[8][0]+3,nose[0][1]-25),(255,255,255),2)
+    cv2.line(frame, (jaw[8][0],jaw[8][1]), (jaw[8][0],nose[0][1]-50), (255, 255, 255),2)
+    cv2.line(frame,(jaw[8][0]-3,nose[0][1]-40),(jaw[8][0]+3,nose[0][1]-40),(255,255,255),2)
     cv2.rectangle(frame,(jaw[8][0]-5,jaw[8][1]-5),(jaw[8][0]+5,jaw[8][1]+5),(255,255,255),2)
+    
     cv2.rectangle(frame,(jaw[8][0]-5,nose[0][1]-5),(jaw[8][0]+5,nose[0][1]+5),(255,255,255),2)
+    
     cv2.rectangle(frame,(jaw[8][0]-3,nose[6][1]-3),(jaw[8][0]+3,nose[6][1]+3),(255,255,255),1)
 
     # Cross sign
@@ -228,12 +280,114 @@ def face_ui(frame,features):
     cv2.line(frame,(mouth[15][0],mouth[15][1]-3),(mouth[15][0],mouth[15][1]+3),(255,255,255),2)
 
     cv2.rectangle(frame,(mouth[6][0]-5,mouth[6][1]-5),(mouth[6][0]+5,mouth[6][1]+5),(255,255,255),1)
-    cv2.rectangle(frame,(mouth[11][0]-5,mouth[11][1]-5),(mouth[11][0]+5,mouth[11][1]+5),(255,255,255),1)
+    cv2.rectangle(frame,(mouth[0][0]-5,mouth[0][1]-5),(mouth[0][0]+5,mouth[0][1]+5),(255,255,255),1)
+
+    # Extra stars
+    cv2.line(frame,(mouth[13][0]-3,mouth[13][1]),(mouth[13][0]+3,mouth[13][1]),(255,255,255),2)
+    cv2.line(frame,(mouth[13][0],mouth[13][1]-3),(mouth[13][0],mouth[13][1]+3),(255,255,255),2)
+
+    cv2.line(frame,(nose[8][0]-3,nose[8][1]),(nose[8][0]+3,nose[8][1]),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(nose[8][0],nose[8][1]-3),(nose[8][0],nose[8][1]+3),(255,255,255),2,lineType=cv2.LINE_AA)
+
 
     # Extra Lines 
-    cv2.line(frame,(right_eyebrow[2][0],right_eyebrow[2][1]),(jaw[8][0],right_eyebrow[2][1]),(255,255,255),1)
+    cv2.line(frame,(left_eye[4][0]-3,left_eye[4][1]+20),(left_eye[4][0]+3,left_eye[4][1]+20),(255,255,255),2)
+    cv2.line(frame,(left_eye[4][0],left_eye[4][1]+17),(left_eye[4][0],left_eye[4][1]+23),(255,255,255),2)
+    cv2.line(frame,(left_eye[3][0],left_eye[3][1]+17),(left_eye[3][0],left_eye[3][1]+23),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(left_eye[3][0]-3,left_eye[3][1]+20),(left_eye[3][0]+3,left_eye[3][1]+20),(255,255,255),2,lineType=cv2.LINE_AA)
+
     
+    cv2.line(frame,(jaw[8][0]+3,mouth[9][1]),(jaw[8][0]-3,mouth[9][1]),(255,255,255),1,lineType=cv2.LINE_AA)
+
+    cv2.line(frame,(jaw[6][0],jaw[6][1]),(jaw[7][0],mouth[9][1]),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(jaw[7][0],mouth[9][1]),(jaw[8][0],mouth[9][1]+5),(255,255,255),1,lineType=cv2.LINE_AA)
     
+    cv2.line(frame,(jaw[7][0],mouth[9][1]),(mouth[0][0],mouth[0][1]),(255,255,255),1,lineType=cv2.LINE_AA)
+
+    cv2.line(frame,(jaw[8][0],mouth[9][1]+10),(jaw[7][0]-6,mouth[9][1]+12),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(jaw[8][0],jaw[8][1]),(jaw[8][0]-9,jaw[7][1]-17),(255,255,255),1,lineType=cv2.LINE_AA)
+    
+    cv2.line(frame,(jaw[7][0]-6,mouth[9][1]+12),(jaw[8][0]-9,jaw[7][1]-17),(255,255,255),1,lineType=cv2.LINE_AA)
+
+    cv2.line(frame,(jaw[6][0],jaw[6][1]),(jaw[8][0]-9,jaw[7][1]-17),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(jaw[8][0]-11,jaw[8][1]+1),(jaw[8][0]-9,jaw[7][1]-17),(255,255,255),1,lineType=cv2.LINE_AA)
+    
+    cv2.line(frame,(jaw[8][0]-22,jaw[8][1]),(jaw[8][0]-9,jaw[7][1]-17),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(jaw[8][0]-22,jaw[8][1]),(jaw[8][0]-9,jaw[7][1]-17),(255,255,255),1,lineType=cv2.LINE_AA)
+
+    cv2.line(frame,(jaw[8][0],jaw[8][1]-20),(jaw[8][0]-9,jaw[7][1]-17),(255,255,255),1,lineType=cv2.LINE_AA)
+
+    cv2.line(frame,(jaw[8][0],mouth[9][1]+10),(jaw[8][0]-9,jaw[7][1]-17),(255,255,255),1,lineType=cv2.LINE_AA)
+
+    cv2.line(frame,(jaw[7][0],mouth[9][1]),(mouth[0][0],mouth[0][1]),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(jaw[7][0],mouth[9][1]),(jaw[6][0]-7,mouth[9][1]+4),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(mouth[0][0],mouth[0][1]),(jaw[6][0]-7,mouth[9][1]+4),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(jaw[7][0]-6,mouth[9][1]+12),(jaw[6][0]-7,mouth[9][1]+4),(255,255,255),1,lineType=cv2.LINE_AA)
+
+    cv2.line(frame,(jaw[5][0],mouth[0][1]+4),(jaw[6][0]-7,mouth[9][1]+4),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(jaw[5][0],mouth[0][1]+4),(mouth[0][0],mouth[0][1]),(255,255,255),1,lineType=cv2.LINE_AA)
+
+    # Above mouth line design
+    cv2.line(frame,(jaw[5][0],mouth[0][1]+4),(jaw[5][0]-6,mouth[2][1]-2),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(mouth[0][0],mouth[0][1]),(mouth[0][0]-2,mouth[2][1]),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(jaw[5][0]-6,mouth[2][1]-2),(mouth[0][0]-2,mouth[2][1]),(255,255,255),1,lineType=cv2.LINE_AA)
+
+    cv2.line(frame,(mouth[0][0]-2,mouth[2][1]),(jaw[5][0],mouth[0][1]+4),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(jaw[5][0]-6,mouth[2][1]-2),(mouth[0][0],mouth[0][1]),(255,255,255),1,lineType=cv2.LINE_AA)
+
+    cv2.line(frame,(jaw[5][0]-6,mouth[2][1]-2),(jaw[4][0],nose[3][1]+2),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(mouth[0][0]-2,mouth[2][1]),(mouth[0][0]-6,nose[3][1]+6),(255,255,255),1,lineType=cv2.LINE_AA)
+
+    cv2.line(frame,(mouth[0][0]-6,nose[3][1]+6),(jaw[4][0]+6,nose[3][1]),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(jaw[4][0],nose[3][1]+2),(jaw[4][0]+6,nose[3][1]),(255,255,255),1,lineType=cv2.LINE_AA)
+
+    cv2.line(frame,(jaw[4][0],nose[3][1]+2),(jaw[5][0]+1,nose[3][1]+9),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(jaw[5][0]+1,nose[3][1]+9),(mouth[0][0]-6,nose[3][1]+6),(255,255,255),1,lineType=cv2.LINE_AA)
+
+    cv2.line(frame,(jaw[5][0]+1,nose[3][1]+9),(jaw[5][0]-6,mouth[2][1]-2),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(jaw[5][0]+1,nose[3][1]+9),(mouth[0][0]-2,mouth[2][1]),(255,255,255),1,lineType=cv2.LINE_AA)
+
+    cv2.line(frame,(mouth[0][0],mouth[0][1]),(nose[4][0]-5,mouth[2][1]-7),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(mouth[0][0]-2,mouth[2][1]),(nose[4][0]-5,mouth[2][1]-7),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(nose[4][0]-5,mouth[2][1]-7),(nose[4][0]-8,mouth[2][1]-10),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(nose[4][0]-8,mouth[2][1]-10),(mouth[0][0]-2,mouth[2][1]),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(nose[4][0]-8,mouth[2][1]-10),(mouth[0][0]-6,nose[3][1]+6),(255,255,255),1,lineType=cv2.LINE_AA)
+
+    cv2.line(frame,(nose[4][0]-5,mouth[2][1]-10),(nose[4][0]-11,mouth[2][1]-10),(255,255,255),2)
+    cv2.line(frame,(nose[4][0]-8,mouth[2][1]-7),(nose[4][0]-8,mouth[2][1]-13),(255,255,255),2)
+
+    # Above nose design part
+    cv2.line(frame,(jaw[4][0],nose[3][1]+2),(jaw[4][0]+2,nose[3][1]-5),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(jaw[4][0]+6,nose[3][1]),(jaw[4][0]+2,nose[3][1]-5),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(jaw[4][0]+2,nose[3][1]-5),(jaw[4][0]+13,nose[2][1]+1),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(jaw[4][0]+6,nose[3][1]),(jaw[4][0]+13,nose[2][1]+1),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(mouth[0][0]-6,nose[3][1]+6),(jaw[4][0]+13,nose[2][1]+1),(255,255,255),1,lineType=cv2.LINE_AA)
+
+    # Eye design part
+    cv2.line(frame,(jaw[4][0]+2,nose[3][1]-5),(right_eye[0][0]-13,right_eye[0][1]-1),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(right_eye[0][0]-13,right_eye[0][1]-1),(right_eye[0][0],right_eye[0][1]),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(jaw[4][0]+13,nose[2][1]+1),(right_eye[0][0],right_eye[0][1]),(255,255,255),1,lineType=cv2.LINE_AA)
+
+    # Nose part
+    cv2.line(frame,(nose[4][0],nose[4][1]-15),(mouth[0][0]-6,nose[3][1]+6),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(nose[4][0],nose[4][1]-15),(nose[4][0]-8,mouth[2][1]-10),(255,255,255),1,lineType=cv2.LINE_AA)
+
+    cv2.line(frame,(nose[4][0],nose[4][1]-15),(right_eye[3][0]+3,right_eye[3][1]),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(right_eye[3][0]+3,right_eye[3][1]),(mouth[0][0]-6,nose[3][1]+6),(255,255,255),1,lineType=cv2.LINE_AA)
+
+    cv2.line(frame,(jaw[4][0]+13,nose[2][1]+1),(right_eye[2][0],nose[2][1]+1),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(right_eye[3][0]+3,right_eye[3][1]),(right_eye[2][0],nose[2][1]+1),(255,255,255),1,lineType=cv2.LINE_AA)
+    
+    # Curves
+    pt1 = (jaw[8][0],jaw[8][1])
+    pt2 = (jaw[6][0],jaw[6][1])
+    sagitta =5
+
+    center, radius, start_angle, end_angle = convert_arc(pt1, pt2, sagitta)
+    axes = (radius, radius)
+    draw_ellipse(frame, center, axes, 0, start_angle, end_angle, (255,255,255))
+
+    #cv2.ellipse(frame,center,axes,0,start_angle,end_angle,255,2)
     #cv2.line(frame, (jaw[8][0],jaw[8][1]), (jaw[8][0],nose[0][1]-30), (255, 255, 255),2)
 
     #cv2.line(frame, (int((nose[0][0]+left_eye[0][0])/2) ,left_eye[0][1]), (left_eye[1][0],left_eye[1][1]), (255, 255, 255),1)
@@ -354,7 +508,7 @@ line_pairs = [[0, 1], [1, 2], [2, 3], [3, 0],
 
 
 
-cam = cv2.VideoCapture(0)
+cam = cv2.VideoCapture("Rose2.mp4")
 
 """ We use cv2.VideoWriter() to save the video """
 #fourcc = cv2.VideoWriter_fourcc(*'XVID')
@@ -387,7 +541,7 @@ while cam.isOpened():
             
             # Head Pose Code
             tx,ty,tw,th = rect2bb(rect)
-            cv2.rectangle(img,(tx,ty),(tx+tw,ty+th),(255,0,0),2)
+            #cv2.rectangle(img,(tx,ty),(tx+tw,ty+th),(255,0,0),2)
             h_shape = predictor(img,rect)
             h_shape = face_utils.shape_to_np(h_shape)
             reprojectdst, euler_angle = get_head_pose(h_shape)

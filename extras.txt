@@ -1,3 +1,6 @@
 # Color Segmentation using Backprojection
 https://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_imgproc/py_histograms/py_histogram_backprojection/py_histogram_backprojection.html
 
+
+# To draw an arc between two points in OpenCV python
+https://stackoverflow.com/questions/48145096/draw-an-arc-by-using-end-points-and-bulge-distance-in-opencv-or-pil?rq=1
