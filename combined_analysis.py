@@ -220,79 +220,56 @@ def face_ui(frame,features):
     left_eye = features[leStart:leEnd]
     nose = features[nStart:nEnd]
     jaw = features[jStart:jEnd]
+
+
+    # Lines start    
+    cv2.line(frame, (jaw[8][0],jaw[8][1]), (jaw[8][0],nose[0][1]-50), (255, 255, 255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(jaw[8][0]-3,nose[0][1]-40),(jaw[8][0]+3,nose[0][1]-40),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.rectangle(frame,(jaw[8][0]-5,jaw[8][1]-5),(jaw[8][0]+5,jaw[8][1]+5),(255,255,255),2,lineType=cv2.LINE_AA)
     
-    #cv2.line(frame, (), (), (255, 255, 255),1)
-    cv2.line(frame, (jaw[8][0],jaw[8][1]), (jaw[8][0],nose[0][1]-50), (255, 255, 255),2)
-    cv2.line(frame,(jaw[8][0]-3,nose[0][1]-40),(jaw[8][0]+3,nose[0][1]-40),(255,255,255),2)
-    cv2.rectangle(frame,(jaw[8][0]-5,jaw[8][1]-5),(jaw[8][0]+5,jaw[8][1]+5),(255,255,255),2)
+    cv2.rectangle(frame,(jaw[8][0]-5,nose[0][1]-5),(jaw[8][0]+5,nose[0][1]+5),(255,255,255),2,lineType=cv2.LINE_AA)
     
-    cv2.rectangle(frame,(jaw[8][0]-5,nose[0][1]-5),(jaw[8][0]+5,nose[0][1]+5),(255,255,255),2)
-    
-    cv2.rectangle(frame,(jaw[8][0]-3,nose[6][1]-3),(jaw[8][0]+3,nose[6][1]+3),(255,255,255),1)
+    cv2.rectangle(frame,(jaw[8][0]-3,nose[6][1]-3),(jaw[8][0]+3,nose[6][1]+3),(255,255,255),1,lineType=cv2.LINE_AA)
 
     # Cross sign
-    # Left eyebrows
-    cv2.line(frame,(left_eyebrow[0][0],left_eyebrow[0][1]-3),(left_eyebrow[0][0],left_eyebrow[0][1]+3),(255,255,255),2)
-    cv2.line(frame,(left_eyebrow[0][0]-3,left_eyebrow[0][1]),(left_eyebrow[0][0]+3,left_eyebrow[0][1]),(255,255,255),2)
-    cv2.line(frame,(left_eyebrow[1][0],left_eyebrow[1][1]-3),(left_eyebrow[1][0],left_eyebrow[1][1]+3),(255,255,255),2)
-    cv2.line(frame,(left_eyebrow[1][0]-3,left_eyebrow[1][1]),(left_eyebrow[1][0]+3,left_eyebrow[1][1]),(255,255,255),2)
-    cv2.line(frame,(left_eyebrow[2][0],left_eyebrow[2][1]-3),(left_eyebrow[2][0],left_eyebrow[2][1]+3),(255,255,255),2)
-    cv2.line(frame,(left_eyebrow[2][0]-3,left_eyebrow[2][1]),(left_eyebrow[2][0]+3,left_eyebrow[2][1]),(255,255,255),2)
-    cv2.line(frame,(left_eyebrow[3][0],left_eyebrow[3][1]-3),(left_eyebrow[3][0],left_eyebrow[3][1]+3),(255,255,255),2)
-    cv2.line(frame,(left_eyebrow[3][0]-3,left_eyebrow[3][1]),(left_eyebrow[3][0]+3,left_eyebrow[3][1]),(255,255,255),2)
-    cv2.line(frame,(left_eyebrow[4][0],left_eyebrow[4][1]-3),(left_eyebrow[4][0],left_eyebrow[4][1]+3),(255,255,255),2)
-    cv2.line(frame,(left_eyebrow[4][0]-3,left_eyebrow[4][1]),(left_eyebrow[4][0]+3,left_eyebrow[4][1]),(255,255,255),2)
-    
-    # Right eyebrows
-    cv2.line(frame,(right_eyebrow[0][0],right_eyebrow[0][1]-3),(right_eyebrow[0][0],right_eyebrow[0][1]+3),(255,255,255),2)
-    cv2.line(frame,(right_eyebrow[0][0]-3,right_eyebrow[0][1]),(right_eyebrow[0][0]+3,right_eyebrow[0][1]),(255,255,255),2)
-    cv2.line(frame,(right_eyebrow[1][0],right_eyebrow[1][1]-3),(right_eyebrow[1][0],right_eyebrow[1][1]+3),(255,255,255),2)
-    cv2.line(frame,(right_eyebrow[1][0]-3,right_eyebrow[1][1]),(right_eyebrow[1][0]+3,right_eyebrow[1][1]),(255,255,255),2)
-    cv2.line(frame,(right_eyebrow[2][0],right_eyebrow[2][1]-3),(right_eyebrow[2][0],right_eyebrow[2][1]+3),(255,255,255),2)
-    cv2.line(frame,(right_eyebrow[2][0]-3,right_eyebrow[2][1]),(right_eyebrow[2][0]+3,right_eyebrow[2][1]),(255,255,255),2)
-    cv2.line(frame,(right_eyebrow[3][0],right_eyebrow[3][1]-3),(right_eyebrow[3][0],right_eyebrow[3][1]+3),(255,255,255),2)
-    cv2.line(frame,(right_eyebrow[3][0]-3,right_eyebrow[3][1]),(right_eyebrow[3][0]+3,right_eyebrow[3][1]),(255,255,255),2)
-    cv2.line(frame,(right_eyebrow[4][0],right_eyebrow[4][1]-3),(right_eyebrow[4][0],right_eyebrow[4][1]+3),(255,255,255),2)
-    cv2.line(frame,(right_eyebrow[4][0]-3,right_eyebrow[4][1]),(right_eyebrow[4][0]+3,right_eyebrow[4][1]),(255,255,255),2)
-    
     # Jaw parts
-    cv2.line(frame,(jaw[10][0],jaw[10][1]-3),(jaw[10][0],jaw[10][1]+3),(255,255,255),2)
-    cv2.line(frame,(jaw[10][0]-3,jaw[10][1]),(jaw[10][0]+3,jaw[10][1]),(255,255,255),2)
-    cv2.line(frame,(jaw[11][0]-3,jaw[11][1]),(jaw[11][0]+3,jaw[11][1]),(255,255,255),2)
-    cv2.line(frame,(jaw[11][0],jaw[11][1]-3),(jaw[11][0],jaw[11][1]+3),(255,255,255),2)
-    cv2.line(frame,(jaw[13][0]-3,jaw[13][1]),(jaw[13][0]+3,jaw[13][1]),(255,255,255),2)
-    cv2.line(frame,(jaw[13][0],jaw[13][1]-3),(jaw[13][0],jaw[13][1]+3),(255,255,255),2)
+    cv2.line(frame,(jaw[10][0],jaw[10][1]-3),(jaw[10][0],jaw[10][1]+3),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(jaw[10][0]-3,jaw[10][1]),(jaw[10][0]+3,jaw[10][1]),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(jaw[11][0]-3,jaw[11][1]),(jaw[11][0]+3,jaw[11][1]),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(jaw[11][0],jaw[11][1]-3),(jaw[11][0],jaw[11][1]+3),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(jaw[13][0]-3,jaw[13][1]),(jaw[13][0]+3,jaw[13][1]),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(jaw[13][0],jaw[13][1]-3),(jaw[13][0],jaw[13][1]+3),(255,255,255),2,lineType=cv2.LINE_AA)
 
-    cv2.line(frame,(jaw[6][0]-3,jaw[6][1]),(jaw[6][0]+3,jaw[6][1]),(255,255,255),2)
-    cv2.line(frame,(jaw[6][0],jaw[6][1]-3),(jaw[6][0],jaw[6][1]+3),(255,255,255),2)
-    cv2.line(frame,(jaw[5][0]-3,jaw[5][1]),(jaw[5][0]+3,jaw[5][1]),(255,255,255),2)
-    cv2.line(frame,(jaw[5][0],jaw[5][1]-3),(jaw[5][0],jaw[5][1]+3),(255,255,255),2)
-    cv2.line(frame,(jaw[3][0],jaw[3][1]-3),(jaw[3][0],jaw[3][1]+3),(255,255,255),2)
-    cv2.line(frame,(jaw[3][0]-3,jaw[3][1]),(jaw[3][0]+3,jaw[3][1]),(255,255,255),2)
+    cv2.line(frame,(jaw[6][0]-3,jaw[6][1]),(jaw[6][0]+3,jaw[6][1]),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(jaw[6][0],jaw[6][1]-3),(jaw[6][0],jaw[6][1]+3),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(jaw[5][0]-3,jaw[5][1]),(jaw[5][0]+3,jaw[5][1]),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(jaw[5][0],jaw[5][1]-3),(jaw[5][0],jaw[5][1]+3),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(jaw[3][0],jaw[3][1]-3),(jaw[3][0],jaw[3][1]+3),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(jaw[3][0]-3,jaw[3][1]),(jaw[3][0]+3,jaw[3][1]),(255,255,255),2,lineType=cv2.LINE_AA)
 
-    cv2.rectangle(frame,(jaw[2][0]-5,jaw[2][1]-5),(jaw[2][0]+5,jaw[2][1]+5),(255,255,255),2)
-    cv2.rectangle(frame,(jaw[14][0]-5,jaw[14][1]-5),(jaw[14][0]+5,jaw[14][1]+5),(255,255,255),2)
+    cv2.rectangle(frame,(jaw[2][0]-5,jaw[2][1]-5),(jaw[2][0]+5,jaw[2][1]+5),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.rectangle(frame,(jaw[14][0]-5,jaw[14][1]-5),(jaw[14][0]+5,jaw[14][1]+5),(255,255,255),2,lineType=cv2.LINE_AA)
 
     # Mouth part
-    cv2.line(frame,(mouth[13][0]-3,mouth[13][1]),(mouth[13][0]+3,mouth[13][1]),(255,255,255),2)
-    cv2.line(frame,(mouth[13][0],mouth[13][1]-3),(mouth[13][0],mouth[13][1]+3),(255,255,255),2)
-    cv2.line(frame,(mouth[15][0]-3,mouth[15][1]),(mouth[15][0]+3,mouth[15][1]),(255,255,255),2)
-    cv2.line(frame,(mouth[15][0],mouth[15][1]-3),(mouth[15][0],mouth[15][1]+3),(255,255,255),2)
+    cv2.line(frame,(mouth[13][0]-3,mouth[13][1]),(mouth[13][0]+3,mouth[13][1]),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(mouth[13][0],mouth[13][1]-3),(mouth[13][0],mouth[13][1]+3),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(mouth[15][0]-3,mouth[15][1]),(mouth[15][0]+3,mouth[15][1]),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(mouth[15][0],mouth[15][1]-3),(mouth[15][0],mouth[15][1]+3),(255,255,255),2,lineType=cv2.LINE_AA)
 
-    cv2.rectangle(frame,(mouth[6][0]-5,mouth[6][1]-5),(mouth[6][0]+5,mouth[6][1]+5),(255,255,255),1)
-    cv2.rectangle(frame,(mouth[0][0]-5,mouth[0][1]-5),(mouth[0][0]+5,mouth[0][1]+5),(255,255,255),1)
+    cv2.rectangle(frame,(mouth[6][0]-5,mouth[6][1]-5),(mouth[6][0]+5,mouth[6][1]+5),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.rectangle(frame,(mouth[0][0]-5,mouth[0][1]-5),(mouth[0][0]+5,mouth[0][1]+5),(255,255,255),1,lineType=cv2.LINE_AA)
 
     # Extra stars
-    cv2.line(frame,(mouth[13][0]-3,mouth[13][1]),(mouth[13][0]+3,mouth[13][1]),(255,255,255),2)
-    cv2.line(frame,(mouth[13][0],mouth[13][1]-3),(mouth[13][0],mouth[13][1]+3),(255,255,255),2)
+    cv2.line(frame,(mouth[13][0]-3,mouth[13][1]),(mouth[13][0]+3,mouth[13][1]),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(mouth[13][0],mouth[13][1]-3),(mouth[13][0],mouth[13][1]+3),(255,255,255),2,lineType=cv2.LINE_AA)
 
     cv2.line(frame,(nose[8][0]-3,nose[8][1]),(nose[8][0]+3,nose[8][1]),(255,255,255),2,lineType=cv2.LINE_AA)
     cv2.line(frame,(nose[8][0],nose[8][1]-3),(nose[8][0],nose[8][1]+3),(255,255,255),2,lineType=cv2.LINE_AA)
 
 
     # Extra Lines 
-    cv2.line(frame,(left_eye[4][0]-3,left_eye[4][1]+20),(left_eye[4][0]+3,left_eye[4][1]+20),(255,255,255),2)
-    cv2.line(frame,(left_eye[4][0],left_eye[4][1]+17),(left_eye[4][0],left_eye[4][1]+23),(255,255,255),2)
+    cv2.line(frame,(left_eye[4][0]-3,left_eye[4][1]+20),(left_eye[4][0]+3,left_eye[4][1]+20),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(left_eye[4][0],left_eye[4][1]+17),(left_eye[4][0],left_eye[4][1]+23),(255,255,255),2,lineType=cv2.LINE_AA)
     cv2.line(frame,(left_eye[3][0],left_eye[3][1]+17),(left_eye[3][0],left_eye[3][1]+23),(255,255,255),2,lineType=cv2.LINE_AA)
     cv2.line(frame,(left_eye[3][0]-3,left_eye[3][1]+20),(left_eye[3][0]+3,left_eye[3][1]+20),(255,255,255),2,lineType=cv2.LINE_AA)
 
@@ -377,7 +354,45 @@ def face_ui(frame,features):
 
     cv2.line(frame,(jaw[4][0]+13,nose[2][1]+1),(right_eye[2][0],nose[2][1]+1),(255,255,255),1,lineType=cv2.LINE_AA)
     cv2.line(frame,(right_eye[3][0]+3,right_eye[3][1]),(right_eye[2][0],nose[2][1]+1),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(right_eye[2][0],nose[2][1]+1),(mouth[0][0]-6,nose[3][1]+6),(255,255,255),1,lineType=cv2.LINE_AA)
+
+
+
+    # Right eye designs
+    cv2.line(frame,(right_eyebrow[2][0],right_eyebrow[2][1]),(jaw[8][0],right_eyebrow[2][1]),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(right_eyebrow[2][0],right_eyebrow[2][1]),(jaw[8][0],nose[0][1]),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(right_eyebrow[4][0]-1,nose[0][1]),(jaw[8][0],nose[0][1]),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(right_eyebrow[4][0]-1,nose[0][1]),(right_eyebrow[4][0]-1,nose[0][1]-9),(255,255,255),1,lineType=cv2.LINE_AA)
+
+
+    # Right eyebrows
+    cv2.line(frame,(right_eyebrow[0][0],right_eyebrow[0][1]-3),(right_eyebrow[0][0],right_eyebrow[0][1]+3),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(right_eyebrow[0][0]-3,right_eyebrow[0][1]),(right_eyebrow[0][0]+3,right_eyebrow[0][1]),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(right_eyebrow[1][0],right_eyebrow[1][1]-3),(right_eyebrow[1][0],right_eyebrow[1][1]+3),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(right_eyebrow[1][0]-3,right_eyebrow[1][1]),(right_eyebrow[1][0]+3,right_eyebrow[1][1]),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(right_eyebrow[2][0],right_eyebrow[2][1]-3),(right_eyebrow[2][0],right_eyebrow[2][1]+3),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(right_eyebrow[2][0]-3,right_eyebrow[2][1]),(right_eyebrow[2][0]+3,right_eyebrow[2][1]),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(right_eyebrow[3][0],right_eyebrow[3][1]+10),(right_eyebrow[3][0],right_eyebrow[3][1]+4),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(right_eyebrow[3][0]-3,right_eyebrow[3][1]+7),(right_eyebrow[3][0]+3,right_eyebrow[3][1]+7),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(right_eyebrow[4][0]-1,nose[0][1]-3),(right_eyebrow[4][0]-1,nose[0][1]+3),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(right_eyebrow[4][0]-4,nose[0][1]),(right_eyebrow[4][0]+2,nose[0][1]),(255,255,255),2,lineType=cv2.LINE_AA)
     
+
+
+    # Left eyebrows
+    cv2.line(frame,(left_eyebrow[0][0],left_eyebrow[0][1]-3),(left_eyebrow[0][0],left_eyebrow[0][1]+3),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(left_eyebrow[0][0]-3,left_eyebrow[0][1]),(left_eyebrow[0][0]+3,left_eyebrow[0][1]),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(left_eyebrow[1][0],left_eyebrow[1][1]-3),(left_eyebrow[1][0],left_eyebrow[1][1]+3),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(left_eyebrow[1][0]-3,left_eyebrow[1][1]),(left_eyebrow[1][0]+3,left_eyebrow[1][1]),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(left_eyebrow[2][0],left_eyebrow[2][1]-3),(left_eyebrow[2][0],left_eyebrow[2][1]+3),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(left_eyebrow[2][0]-3,left_eyebrow[2][1]),(left_eyebrow[2][0]+3,left_eyebrow[2][1]),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(left_eyebrow[3][0],left_eyebrow[3][1]-3),(left_eyebrow[3][0],left_eyebrow[3][1]+3),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(left_eyebrow[3][0]-3,left_eyebrow[3][1]),(left_eyebrow[3][0]+3,left_eyebrow[3][1]),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(left_eyebrow[4][0],left_eyebrow[4][1]-3),(left_eyebrow[4][0],left_eyebrow[4][1]+3),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(left_eyebrow[4][0]-3,left_eyebrow[4][1]),(left_eyebrow[4][0]+3,left_eyebrow[4][1]),(255,255,255),2,lineType=cv2.LINE_AA)
+    
+
+
     # Curves
     pt1 = (jaw[8][0],jaw[8][1])
     pt2 = (jaw[6][0],jaw[6][1])
