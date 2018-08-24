@@ -377,6 +377,16 @@ def face_ui(frame,features):
     cv2.line(frame,(right_eyebrow[4][0]-1,nose[0][1]-3),(right_eyebrow[4][0]-1,nose[0][1]+3),(255,255,255),2,lineType=cv2.LINE_AA)
     cv2.line(frame,(right_eyebrow[4][0]-4,nose[0][1]),(right_eyebrow[4][0]+2,nose[0][1]),(255,255,255),2,lineType=cv2.LINE_AA)
     
+    cv2.line(frame,(right_eye[3][0],right_eye[3][1]),(left_eye[0][0],right_eye[3][1]),(255,255,255),1,lineType=cv2.LINE_AA)
+
+    cv2.line(frame,(right_eye[3][0],right_eye[3][1]-3),(right_eye[3][0],right_eye[3][1]+3),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(right_eye[3][0]-3,right_eye[3][1]),(right_eye[3][0]+3,right_eye[3][1]),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(left_eye[0][0],right_eye[3][1]-3),(left_eye[0][0],right_eye[3][1]+3),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(left_eye[0][0]-3,right_eye[3][1]),(left_eye[0][0]+3,right_eye[3][1]),(255,255,255),1,lineType=cv2.LINE_AA)
+
+    cv2.line(frame,(right_eye[0][0]-3,right_eye[0][1]),(right_eye[0][0]+3,right_eye[0][1]),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(right_eye[0][0],right_eye[0][1]-3),(right_eye[0][0],right_eye[0][1]+3),(255,255,255),1,lineType=cv2.LINE_AA)
+
 
 
     # Left eyebrows
@@ -391,7 +401,8 @@ def face_ui(frame,features):
     cv2.line(frame,(left_eyebrow[4][0],left_eyebrow[4][1]-3),(left_eyebrow[4][0],left_eyebrow[4][1]+3),(255,255,255),2,lineType=cv2.LINE_AA)
     cv2.line(frame,(left_eyebrow[4][0]-3,left_eyebrow[4][1]),(left_eyebrow[4][0]+3,left_eyebrow[4][1]),(255,255,255),2,lineType=cv2.LINE_AA)
     
-
+    cv2.line(frame,(left_eye[2][0]-3,left_eye[2][1]),(left_eye[2][0]+3,left_eye[2][1]),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(left_eye[2][0],left_eye[2][1]-3),(left_eye[2][0],left_eye[2][1]+3),(255,255,255),1,lineType=cv2.LINE_AA)
 
     # Curves
     pt1 = (jaw[8][0],jaw[8][1])
