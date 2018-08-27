@@ -152,6 +152,8 @@ def get_mouth(features):
     #print(mouth)
     return mouth
 
+
+# Utility function for drawing an arc
 def convert_arc(pt1, pt2, sagitta):
 
     # extract point coordinates
@@ -194,6 +196,7 @@ def convert_arc(pt1, pt2, sagitta):
 
     return (cx, cy), radius, pt1_angle, pt2_angle
 
+# Utility function for drawing an arc
 def draw_ellipse(img, center, axes, angle,startAngle, endAngle, color,thickness=1, lineType=cv2.LINE_AA, shift=10):
     # uses the shift to accurately get sub-pixel resolution for arc
     # taken from https://stackoverflow.com/a/44892317/5087436
