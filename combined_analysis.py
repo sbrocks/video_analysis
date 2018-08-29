@@ -431,24 +431,24 @@ def face_ui(frame,features):
     #cv2.circle(overlay, (int((right_eye[0][0]+right_eye[3][0])/2) , int((right_eye[0][1]+right_eye[3][1])/2) ), 12, (255, 255, 0), -1)
 
     # Emotion Recogniton
-    cv2.rectangle(overlay, (jaw[0][0]-50 , jaw[0][1]-50 ),( jaw[0][0]-130 , jaw[0][1]-100 ), (127, 255, 0), -1)
-    cv2.putText(overlay,"Emotion",( jaw[0][0]-115 , jaw[0][1]-80), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(0,147,255),1,cv2.LINE_AA)
-    cv2.putText(overlay,"Recognition",( jaw[0][0]-125 , jaw[0][1]-60), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(0,147,255),1,cv2.LINE_AA)
+    cv2.rectangle(overlay, (jaw[0][0]-50 , jaw[0][1]-50 ),( jaw[0][0]-130 , jaw[0][1]-100 ), (255,128, 0), -1)
+    cv2.putText(overlay,"Emotion",( jaw[0][0]-115 , jaw[0][1]-80), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(255,255,255),1,cv2.LINE_AA)
+    cv2.putText(overlay,"Recognition",( jaw[0][0]-125 , jaw[0][1]-60), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(255,255,255),1,cv2.LINE_AA)
     opacity = 0.4
     cv2.addWeighted(overlay, opacity, img, 1 - opacity, 0, img)
 
 
     # Speech
-    cv2.rectangle(overlay, (jaw[0][0]-50 , jaw[0][1]-10 ),( jaw[0][0]-130 , jaw[0][1]+40 ), (127, 255, 0), -1)
-    cv2.putText(overlay,"Personality",( jaw[0][0]-125 , jaw[0][1]+10), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(0,147,255),1,cv2.LINE_AA)
-    cv2.putText(overlay,"Analysis",( jaw[0][0]-115 , jaw[0][1]+30), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(0,147,255),1,cv2.LINE_AA)
+    cv2.rectangle(overlay, (jaw[0][0]-50 , jaw[0][1]-10 ),( jaw[0][0]-130 , jaw[0][1]+40 ), (255,128, 0), -1)
+    cv2.putText(overlay,"Personality",( jaw[0][0]-125 , jaw[0][1]+10), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(255,255,255),1,cv2.LINE_AA)
+    cv2.putText(overlay,"Analysis",( jaw[0][0]-115 , jaw[0][1]+30), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(255,255,255),1,cv2.LINE_AA)
     opacity = 0.4
     cv2.addWeighted(overlay, opacity, img, 1 - opacity, 0, img)
 
     # Facial Analysis
-    cv2.rectangle(overlay, (jaw[0][0]-50 , jaw[0][1]+80 ),( jaw[0][0]-130 , jaw[0][1]+130 ), (127, 255, 0), -1)
-    cv2.putText(overlay,"Facial",( jaw[0][0]-110 , jaw[0][1]+100), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(0,147,255),1,cv2.LINE_AA)
-    cv2.putText(overlay,"Analysis",( jaw[0][0]-115 , jaw[0][1]+120), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(0,147,255),1,cv2.LINE_AA)
+    cv2.rectangle(overlay, (jaw[0][0]-50 , jaw[0][1]+80 ),( jaw[0][0]-130 , jaw[0][1]+130 ), (255,128, 0), -1)
+    cv2.putText(overlay,"Facial",( jaw[0][0]-110 , jaw[0][1]+100), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(255,255,255),1,cv2.LINE_AA)
+    cv2.putText(overlay,"Analysis",( jaw[0][0]-115 , jaw[0][1]+120), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(255,255,255),1,cv2.LINE_AA)
     opacity = 0.4
     cv2.addWeighted(overlay, opacity, img, 1 - opacity, 0, img)
 
@@ -460,8 +460,8 @@ def face_ui(frame,features):
     # Smile design
     #cv2.line(frame,(mouth[6][0],mouth[6][1]), (mouth[6][0]+50,mouth[6][1]),(127,0,255),1)
 
-    cv2.rectangle(overlay, (left_eye[3][0] +80, mouth[6][1]-30 ),( left_eye[3][0]+180 , mouth[6][1] ), (127, 255, 0), -1)
-    cv2.putText(overlay,'Angry',( left_eye[3][0]+95 , mouth[6][1]-10), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(0,47,255),1,cv2.LINE_AA)
+    cv2.rectangle(overlay, (left_eye[3][0] +80, mouth[6][1]-30 ),( left_eye[3][0]+180 , mouth[6][1] ), (255,128, 0), -1)
+    cv2.putText(overlay,'Angry',( left_eye[3][0]+95 , mouth[6][1]-10), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(255,255,255),1,cv2.LINE_AA)
     opacity = 0.4
     cv2.addWeighted(overlay, opacity, img, 1 - opacity, 0, img)
 
@@ -469,25 +469,25 @@ def face_ui(frame,features):
     # Blink
     #cv2.line(frame,(left_eye[3][0],left_eye[3][1]), (left_eye[3][0]+50,left_eye[3][1]),(127,0,255),1)
 
-    cv2.rectangle(overlay, (left_eye[3][0] +80, left_eye[3][1] ),( left_eye[3][0]+180 , left_eye[3][1]+30 ), (127, 255, 0), -1)
-    cv2.putText(overlay,'Happy',( left_eye[3][0]+95 , left_eye[3][1]+20), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(0,47,255),1,cv2.LINE_AA)
+    cv2.rectangle(overlay, (left_eye[3][0] +80, left_eye[3][1] ),( left_eye[3][0]+180 , left_eye[3][1]+30 ), (255,128, 0), -1)
+    cv2.putText(overlay,'Happy',( left_eye[3][0]+95 , left_eye[3][1]+20), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(255,255,255),1,cv2.LINE_AA)
     opacity = 0.4
     cv2.addWeighted(overlay, opacity, img, 1 - opacity, 0, img)
 
 
-    cv2.rectangle(overlay, (left_eye[3][0] +80, left_eye[3][1]-40 ),( left_eye[3][0]+180 , left_eye[3][1]-10 ), (127, 255, 0), -1)
-    cv2.putText(overlay,'Neutral',( left_eye[3][0]+95 , left_eye[3][1]-20), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(0,47,255),1,cv2.LINE_AA)
+    cv2.rectangle(overlay, (left_eye[3][0] +80, left_eye[3][1]-40 ),( left_eye[3][0]+180 , left_eye[3][1]-10 ), (255,128, 0), -1)
+    cv2.putText(overlay,'Neutral',( left_eye[3][0]+95 , left_eye[3][1]-20), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(255,255,255),1,cv2.LINE_AA)
     opacity = 0.4
     cv2.addWeighted(overlay, opacity, img, 1 - opacity, 0, img)
 
 
-    cv2.rectangle(overlay, (left_eye[3][0] +80, left_eye[3][1]-50 ),( left_eye[3][0]+180 , left_eye[3][1]-80 ), (127, 255, 0), -1)
-    cv2.putText(overlay,'Blink',( left_eye[3][0]+95 , left_eye[3][1]-60), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(0,47,255),1,cv2.LINE_AA)
+    cv2.rectangle(overlay, (left_eye[3][0] +80, left_eye[3][1]-50 ),( left_eye[3][0]+180 , left_eye[3][1]-80 ), (255,128, 0), -1)
+    cv2.putText(overlay,'Blink',( left_eye[3][0]+95 , left_eye[3][1]-60), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(255,255,255),1,cv2.LINE_AA)
     opacity = 0.4
     cv2.addWeighted(overlay, opacity, img, 1 - opacity, 0, img)
 
-    cv2.rectangle(overlay, (left_eye[3][0] +80, left_eye[3][1]-90 ),( left_eye[3][0]+180 , left_eye[3][1]-120 ), (127, 255, 0), -1)
-    cv2.putText(overlay,'Frown',( left_eye[3][0]+95 , left_eye[3][1]-100), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(0,47,255),1,cv2.LINE_AA)
+    cv2.rectangle(overlay, (left_eye[3][0] +80, left_eye[3][1]-90 ),( left_eye[3][0]+180 , left_eye[3][1]-120 ), (255,128, 0), -1)
+    cv2.putText(overlay,'Frown',( left_eye[3][0]+95 , left_eye[3][1]-100), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(255,255,255),1,cv2.LINE_AA)
     opacity = 0.4
     cv2.addWeighted(overlay, opacity, img, 1 - opacity, 0, img)
 
@@ -499,23 +499,23 @@ def face_ui(frame,features):
     # Positive Attitude
     #cv2.line(frame,(left_eye[3][0],left_eye[3][1]), (left_eye[3][0]+50,left_eye[3][1]),(127,0,255),1)
 
-    cv2.rectangle(overlay, (left_eye[3][0] +80, mouth[6][1]+10 ),( left_eye[3][0]+180 , mouth[6][1]+40 ), (127, 255, 0), -1)
-    cv2.putText(overlay,'Surprise',( left_eye[3][0]+95 , mouth[6][1]+30), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(0,47,255),1,cv2.LINE_AA)
+    cv2.rectangle(overlay, (left_eye[3][0] +80, mouth[6][1]+10 ),( left_eye[3][0]+180 , mouth[6][1]+40 ), (255,128, 0), -1)
+    cv2.putText(overlay,'Surprise',( left_eye[3][0]+95 , mouth[6][1]+30), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(255,255,255),1,cv2.LINE_AA)
     opacity = 0.4
     cv2.addWeighted(overlay, opacity, img, 1 - opacity, 0, img)
 
-    cv2.rectangle(overlay, (left_eye[3][0] +80, mouth[6][1]+80 ),( left_eye[3][0]+180 , mouth[6][1]+50 ), (127, 255, 0), -1)
-    cv2.putText(overlay,'Fear',( left_eye[3][0]+95 , mouth[6][1]+70), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(0,47,255),1,cv2.LINE_AA)
+    cv2.rectangle(overlay, (left_eye[3][0] +80, mouth[6][1]+80 ),( left_eye[3][0]+180 , mouth[6][1]+50 ), (255,128, 0), -1)
+    cv2.putText(overlay,'Fear',( left_eye[3][0]+95 , mouth[6][1]+70), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(255,255,255),1,cv2.LINE_AA)
     opacity = 0.4
     cv2.addWeighted(overlay, opacity, img, 1 - opacity, 0, img)
 
-    cv2.rectangle(overlay, (left_eye[3][0] +80, mouth[6][1]+90 ),( left_eye[3][0]+180 , mouth[6][1]+120 ), (127, 255, 0), -1)
-    cv2.putText(overlay,'Disgust',( left_eye[3][0]+95 , mouth[6][1]+110), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(0,47,255),1,cv2.LINE_AA)
+    cv2.rectangle(overlay, (left_eye[3][0] +80, mouth[6][1]+90 ),( left_eye[3][0]+180 , mouth[6][1]+120 ), (255,128, 0), -1)
+    cv2.putText(overlay,'Disgust',( left_eye[3][0]+95 , mouth[6][1]+110), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(255,255,255),1,cv2.LINE_AA)
     opacity = 0.4
     cv2.addWeighted(overlay, opacity, img, 1 - opacity, 0, img)
 
-    cv2.rectangle(overlay, (left_eye[3][0] +80, mouth[6][1]+130 ),( left_eye[3][0]+180 , mouth[6][1]+160 ), (127, 255, 0), -1)
-    cv2.putText(overlay,'Sad',( left_eye[3][0]+95 , mouth[6][1]+150), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(0,47,255),1,cv2.LINE_AA)
+    cv2.rectangle(overlay, (left_eye[3][0] +80, mouth[6][1]+130 ),( left_eye[3][0]+180 , mouth[6][1]+160 ), (255,128, 0), -1)
+    cv2.putText(overlay,'Sad',( left_eye[3][0]+95 , mouth[6][1]+150), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(255,255,255),1,cv2.LINE_AA)
     opacity = 0.4
     cv2.addWeighted(overlay, opacity, img, 1 - opacity, 0, img)
 
@@ -652,6 +652,7 @@ while cam.isOpened():
             y.append(l_EAR);
         #out.write(img)
         cv2.imshow('my webcam', img)
+        cv2.imwrite('frame'+str(num_frames)+'.jpg',img)
         waitKey = cv2.waitKey(1)
         if waitKey == 27: #Escape clicked.Exit program
             break
