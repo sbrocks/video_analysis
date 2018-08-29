@@ -377,8 +377,7 @@ while cam.isOpened():
             cv2.putText(img, emotion, (int(tx), int(ty)), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
 
 
-            # Make UI for Face
-            #face_ui(img,features)
+
 
             l_EAR = calculate_EAR(l_eye)
             r_EAR = calculate_EAR(r_eye)
@@ -430,7 +429,8 @@ while cam.isOpened():
             else:
                 pass
 
-
+            # Make UI for Face
+            face_ui(img,features)
             
             cv2.putText(img, "Blinks: {} , {} ".format(L_BLINK_COUNTER, R_BLINK_COUNTER), (10, 30),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
