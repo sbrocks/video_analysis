@@ -475,40 +475,52 @@ def face_ui(frame,features,gf_blink):
 
     cv2.rectangle(overlay, (left_eye[3][0] +80, mouth[6][1]-30 ),( left_eye[3][0]+180 , mouth[6][1] ), (255,128, 0), -1)
     cv2.putText(overlay,'Angry',( left_eye[3][0]+95 , mouth[6][1]-10), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(255,255,255),1,cv2.LINE_AA)
+    cv2.circle(overlay,(left_eye[3][0]+165,mouth[6][1]-15),10,(255,255,255),-1,lineType=cv2.LINE_AA)
+    cv2.line(overlay, (left_eye[3][0]+158,mouth[6][1]-14), (left_eye[3][0]+162,mouth[6][1]-8), (255,128, 0),2,lineType=cv2.LINE_AA)
+    cv2.line(overlay, (left_eye[3][0]+173,mouth[6][1]-18), (left_eye[3][0]+162,mouth[6][1]-8), (255,128, 0),2,lineType=cv2.LINE_AA)
     opacity = 0.4
     cv2.addWeighted(overlay, opacity, img, 1 - opacity, 0, img)
-    cv2.circle(overlay,(left_eye[3][0]+165,mouth[6][1]-15),10,(255,255,255),-1,lineType=cv2.LINE_AA)
+
 
     # Blink
     #cv2.line(frame,(left_eye[3][0],left_eye[3][1]), (left_eye[3][0]+50,left_eye[3][1]),(127,0,255),1)
 
     cv2.rectangle(overlay, (left_eye[3][0] +80, left_eye[3][1] ),( left_eye[3][0]+180 , left_eye[3][1]+30 ), (255,128, 0), -1)
     cv2.putText(overlay,'Happy',( left_eye[3][0]+95 , left_eye[3][1]+20), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(255,255,255),1,cv2.LINE_AA)
+    cv2.circle(overlay,(left_eye[3][0]+165,left_eye[3][1]+15),10,(255,255,255),-1,lineType=cv2.LINE_AA)
+    cv2.line(overlay, (left_eye[3][0]+158,left_eye[3][1]+16), (left_eye[3][0]+162,left_eye[3][1]+22), (255,128, 0),2,lineType=cv2.LINE_AA)
+    cv2.line(overlay, (left_eye[3][0]+173,left_eye[3][1]+12), (left_eye[3][0]+162,left_eye[3][1]+22), (255,128, 0),2,lineType=cv2.LINE_AA)
     opacity = 0.4
     cv2.addWeighted(overlay, opacity, img, 1 - opacity, 0, img)
-    cv2.circle(overlay,(left_eye[3][0]+165,left_eye[3][1]+15),10,(255,255,255),-1,lineType=cv2.LINE_AA)
+
 
     cv2.rectangle(overlay, (left_eye[3][0] +80, left_eye[3][1]-40 ),( left_eye[3][0]+180 , left_eye[3][1]-10 ), (255,128, 0), -1)
     cv2.putText(overlay,'Neutral',( left_eye[3][0]+95 , left_eye[3][1]-20), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(255,255,255),1,cv2.LINE_AA)
+    cv2.circle(overlay,(left_eye[3][0]+165,left_eye[3][1]-25),10,(255,255,255),-1,lineType=cv2.LINE_AA)
+    cv2.line(overlay, (left_eye[3][0]+158,left_eye[3][1]-24), (left_eye[3][0]+162,left_eye[3][1]-18), (255,128, 0),2,lineType=cv2.LINE_AA)
+    cv2.line(overlay, (left_eye[3][0]+173,left_eye[3][1]-28), (left_eye[3][0]+162,left_eye[3][1]-18), (255,128, 0),2,lineType=cv2.LINE_AA)
     opacity = 0.4
     cv2.addWeighted(overlay, opacity, img, 1 - opacity, 0, img)
-    cv2.circle(overlay,(left_eye[3][0]+165,left_eye[3][1]-25),10,(255,255,255),-1,lineType=cv2.LINE_AA)
 
 
     cv2.rectangle(overlay, (left_eye[3][0] +80, left_eye[3][1]-50 ),( left_eye[3][0]+180 , left_eye[3][1]-80 ), (255,128, 0), -1)
     cv2.putText(overlay,'Blink',( left_eye[3][0]+95 , left_eye[3][1]-60), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(255,255,255),1,cv2.LINE_AA)
-    print(gf_blink)
+    #print(gf_blink)
     if gf_blink==1:
         cv2.circle(overlay,(left_eye[3][0]+165,left_eye[3][1]-65),10,(255,255,255),-1,lineType=cv2.LINE_AA)
+        cv2.line(overlay, (left_eye[3][0]+158,left_eye[3][1]-64), (left_eye[3][0]+162,left_eye[3][1]-58), (255,128, 0),2,lineType=cv2.LINE_AA)
+        cv2.line(overlay, (left_eye[3][0]+173,left_eye[3][1]-68), (left_eye[3][0]+162,left_eye[3][1]-58), (255,128, 0),2,lineType=cv2.LINE_AA)
         gf_blink=0
     opacity = 0.4
     cv2.addWeighted(overlay, opacity, img, 1 - opacity, 0, img)
 
     cv2.rectangle(overlay, (left_eye[3][0] +80, left_eye[3][1]-90 ),( left_eye[3][0]+180 , left_eye[3][1]-120 ), (255,128, 0), -1)
     cv2.putText(overlay,'Frown',( left_eye[3][0]+95 , left_eye[3][1]-100), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(255,255,255),1,cv2.LINE_AA)
+    cv2.circle(overlay,(left_eye[3][0]+165,left_eye[3][1]-105),10,(255,255,255),-1,lineType=cv2.LINE_AA)
+    cv2.line(overlay, (left_eye[3][0]+158,left_eye[3][1]-104), (left_eye[3][0]+162,left_eye[3][1]-98), (255,128, 0),2,lineType=cv2.LINE_AA)
+    cv2.line(overlay, (left_eye[3][0]+173,left_eye[3][1]-108), (left_eye[3][0]+162,left_eye[3][1]-98), (255,128, 0),2,lineType=cv2.LINE_AA)
     opacity = 0.4
     cv2.addWeighted(overlay, opacity, img, 1 - opacity, 0, img)
-    cv2.circle(overlay,(left_eye[3][0]+165,left_eye[3][1]-105),10,(255,255,255),-1,lineType=cv2.LINE_AA)
 
 
     # Communication
@@ -520,26 +532,37 @@ def face_ui(frame,features,gf_blink):
 
     cv2.rectangle(overlay, (left_eye[3][0] +80, mouth[6][1]+10 ),( left_eye[3][0]+180 , mouth[6][1]+40 ), (255,128, 0), -1)
     cv2.putText(overlay,'Surprise',( left_eye[3][0]+95 , mouth[6][1]+30), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(255,255,255),1,cv2.LINE_AA)
+    cv2.circle(overlay,(left_eye[3][0]+165,mouth[6][1]+25),10,(255,255,255),-1,lineType=cv2.LINE_AA)
+    cv2.line(overlay, (left_eye[3][0]+158,mouth[6][1]+26), (left_eye[3][0]+162,mouth[6][1]+32), (255,128, 0),2,lineType=cv2.LINE_AA)
+    cv2.line(overlay, (left_eye[3][0]+173,mouth[6][1]+22), (left_eye[3][0]+162,mouth[6][1]+32), (255,128, 0),2,lineType=cv2.LINE_AA)
     opacity = 0.4
     cv2.addWeighted(overlay, opacity, img, 1 - opacity, 0, img)
-    cv2.circle(overlay,(left_eye[3][0]+165,mouth[6][1]+25),10,(255,255,255),-1,lineType=cv2.LINE_AA)
+
 
 
     cv2.rectangle(overlay, (left_eye[3][0] +80, mouth[6][1]+80 ),( left_eye[3][0]+180 , mouth[6][1]+50 ), (255,128, 0), -1)
     cv2.putText(overlay,'Fear',( left_eye[3][0]+95 , mouth[6][1]+70), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(255,255,255),1,cv2.LINE_AA)
+    cv2.circle(overlay,(left_eye[3][0]+165,mouth[6][1]+65),10,(255,255,255),-1,lineType=cv2.LINE_AA)
+    cv2.line(overlay, (left_eye[3][0]+158,mouth[6][1]+66), (left_eye[3][0]+162,mouth[6][1]+72), (255,128, 0),2,lineType=cv2.LINE_AA)
+    cv2.line(overlay, (left_eye[3][0]+173,mouth[6][1]+62), (left_eye[3][0]+162,mouth[6][1]+72), (255,128, 0),2,lineType=cv2.LINE_AA)
     opacity = 0.4
     cv2.addWeighted(overlay, opacity, img, 1 - opacity, 0, img)
-    cv2.circle(overlay,(left_eye[3][0]+165,mouth[6][1]+65),10,(255,255,255),-1,lineType=cv2.LINE_AA)
+
 
     cv2.rectangle(overlay, (left_eye[3][0] +80, mouth[6][1]+90 ),( left_eye[3][0]+180 , mouth[6][1]+120 ), (255,128, 0), -1)
     cv2.putText(overlay,'Disgust',( left_eye[3][0]+95 , mouth[6][1]+110), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(255,255,255),1,cv2.LINE_AA)
+    cv2.circle(overlay,(left_eye[3][0]+165,mouth[6][1]+105),10,(255,255,255),-1,lineType=cv2.LINE_AA)
+    cv2.line(overlay, (left_eye[3][0]+158,mouth[6][1]+106), (left_eye[3][0]+162,mouth[6][1]+112), (255,128, 0),2,lineType=cv2.LINE_AA)
+    cv2.line(overlay, (left_eye[3][0]+173,mouth[6][1]+102), (left_eye[3][0]+162,mouth[6][1]+112), (255,128, 0),2,lineType=cv2.LINE_AA)
     opacity = 0.4
     cv2.addWeighted(overlay, opacity, img, 1 - opacity, 0, img)
-    cv2.circle(overlay,(left_eye[3][0]+165,mouth[6][1]+105),10,(255,255,255),-1,lineType=cv2.LINE_AA)
+
 
     cv2.rectangle(overlay, (left_eye[3][0] +80, mouth[6][1]+130 ),( left_eye[3][0]+180 , mouth[6][1]+160 ), (255,128, 0), -1)
     cv2.putText(overlay,'Sad',( left_eye[3][0]+95 , mouth[6][1]+150), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(255,255,255),1,cv2.LINE_AA)
-    cv2.circle(overlay,(left_eye[3][0]+165, mouth[6][1]+145),10,(255,255,255),-1,lineType=cv2.LINE_AA)
+    cv2.circle(overlay,(left_eye[3][0]+165, mouth[6][1]+145),10,(255,255,255),-1,lineType=cv2.LINE_AA)    
+    cv2.line(overlay, (left_eye[3][0]+158,mouth[6][1]+146), (left_eye[3][0]+162,mouth[6][1]+152), (255,128, 0),2,lineType=cv2.LINE_AA)
+    cv2.line(overlay, (left_eye[3][0]+173,mouth[6][1]+142), (left_eye[3][0]+162,mouth[6][1]+152), (255,128, 0),2,lineType=cv2.LINE_AA)
     opacity = 0.4
     cv2.addWeighted(overlay, opacity, img, 1 - opacity, 0, img)
 
@@ -677,7 +700,7 @@ while cam.isOpened():
             if frown_dist < 16.0:
                 frown_count+=1
                 gf_frown=1
-            
+
             L_COUNTER += l_EAR <= EYE_AR_THRESH
             R_COUNTER += r_EAR <= EYE_AR_THRESH
 
