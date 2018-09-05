@@ -21,6 +21,19 @@ TOTAL_BLINK_COUNTER = 0
 L_BLINK_COUNTER = 0
 R_BLINK_COUNTER = 0
 
+# Flags
+global gf_blink
+global gf_frown
+global gf_neutral
+global gf_happy
+global gf_angry
+global gf_surprise
+global gf_fear
+global gf_disgust
+global gf_sad
+
+
+
 #Method to convert rectanngle to Bounding Box
 def rect2bb(rect):
     x = rect.left()
@@ -206,7 +219,7 @@ def draw_ellipse(img, center, axes, angle,startAngle, endAngle, color,thickness=
 
 
 
-def face_ui(frame,features):
+def face_ui(frame,features,gf_blink):
     (mStart, mEnd) = face_utils.FACIAL_LANDMARKS_IDXS["mouth"]
     (rebStart, rebEnd) = face_utils.FACIAL_LANDMARKS_IDXS["right_eyebrow"]
     (lebStart, lebEnd) = face_utils.FACIAL_LANDMARKS_IDXS["left_eyebrow"]
@@ -464,7 +477,7 @@ def face_ui(frame,features):
     cv2.putText(overlay,'Angry',( left_eye[3][0]+95 , mouth[6][1]-10), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(255,255,255),1,cv2.LINE_AA)
     opacity = 0.4
     cv2.addWeighted(overlay, opacity, img, 1 - opacity, 0, img)
-
+    cv2.circle(overlay,(left_eye[3][0]+165,mouth[6][1]-15),10,(255,255,255),-1,lineType=cv2.LINE_AA)
 
     # Blink
     #cv2.line(frame,(left_eye[3][0],left_eye[3][1]), (left_eye[3][0]+50,left_eye[3][1]),(127,0,255),1)
@@ -473,16 +486,21 @@ def face_ui(frame,features):
     cv2.putText(overlay,'Happy',( left_eye[3][0]+95 , left_eye[3][1]+20), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(255,255,255),1,cv2.LINE_AA)
     opacity = 0.4
     cv2.addWeighted(overlay, opacity, img, 1 - opacity, 0, img)
-
+    cv2.circle(overlay,(left_eye[3][0]+165,left_eye[3][1]+15),10,(255,255,255),-1,lineType=cv2.LINE_AA)
 
     cv2.rectangle(overlay, (left_eye[3][0] +80, left_eye[3][1]-40 ),( left_eye[3][0]+180 , left_eye[3][1]-10 ), (255,128, 0), -1)
     cv2.putText(overlay,'Neutral',( left_eye[3][0]+95 , left_eye[3][1]-20), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(255,255,255),1,cv2.LINE_AA)
     opacity = 0.4
     cv2.addWeighted(overlay, opacity, img, 1 - opacity, 0, img)
+    cv2.circle(overlay,(left_eye[3][0]+165,left_eye[3][1]-25),10,(255,255,255),-1,lineType=cv2.LINE_AA)
 
 
     cv2.rectangle(overlay, (left_eye[3][0] +80, left_eye[3][1]-50 ),( left_eye[3][0]+180 , left_eye[3][1]-80 ), (255,128, 0), -1)
     cv2.putText(overlay,'Blink',( left_eye[3][0]+95 , left_eye[3][1]-60), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(255,255,255),1,cv2.LINE_AA)
+    print(gf_blink)
+    if gf_blink==1:
+        cv2.circle(overlay,(left_eye[3][0]+165,left_eye[3][1]-65),10,(255,255,255),-1,lineType=cv2.LINE_AA)
+        gf_blink=0
     opacity = 0.4
     cv2.addWeighted(overlay, opacity, img, 1 - opacity, 0, img)
 
@@ -490,6 +508,7 @@ def face_ui(frame,features):
     cv2.putText(overlay,'Frown',( left_eye[3][0]+95 , left_eye[3][1]-100), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(255,255,255),1,cv2.LINE_AA)
     opacity = 0.4
     cv2.addWeighted(overlay, opacity, img, 1 - opacity, 0, img)
+    cv2.circle(overlay,(left_eye[3][0]+165,left_eye[3][1]-105),10,(255,255,255),-1,lineType=cv2.LINE_AA)
 
 
     # Communication
@@ -503,22 +522,28 @@ def face_ui(frame,features):
     cv2.putText(overlay,'Surprise',( left_eye[3][0]+95 , mouth[6][1]+30), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(255,255,255),1,cv2.LINE_AA)
     opacity = 0.4
     cv2.addWeighted(overlay, opacity, img, 1 - opacity, 0, img)
+    cv2.circle(overlay,(left_eye[3][0]+165,mouth[6][1]+25),10,(255,255,255),-1,lineType=cv2.LINE_AA)
+
 
     cv2.rectangle(overlay, (left_eye[3][0] +80, mouth[6][1]+80 ),( left_eye[3][0]+180 , mouth[6][1]+50 ), (255,128, 0), -1)
     cv2.putText(overlay,'Fear',( left_eye[3][0]+95 , mouth[6][1]+70), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(255,255,255),1,cv2.LINE_AA)
     opacity = 0.4
     cv2.addWeighted(overlay, opacity, img, 1 - opacity, 0, img)
+    cv2.circle(overlay,(left_eye[3][0]+165,mouth[6][1]+65),10,(255,255,255),-1,lineType=cv2.LINE_AA)
 
     cv2.rectangle(overlay, (left_eye[3][0] +80, mouth[6][1]+90 ),( left_eye[3][0]+180 , mouth[6][1]+120 ), (255,128, 0), -1)
     cv2.putText(overlay,'Disgust',( left_eye[3][0]+95 , mouth[6][1]+110), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(255,255,255),1,cv2.LINE_AA)
     opacity = 0.4
     cv2.addWeighted(overlay, opacity, img, 1 - opacity, 0, img)
+    cv2.circle(overlay,(left_eye[3][0]+165,mouth[6][1]+105),10,(255,255,255),-1,lineType=cv2.LINE_AA)
 
     cv2.rectangle(overlay, (left_eye[3][0] +80, mouth[6][1]+130 ),( left_eye[3][0]+180 , mouth[6][1]+160 ), (255,128, 0), -1)
     cv2.putText(overlay,'Sad',( left_eye[3][0]+95 , mouth[6][1]+150), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(255,255,255),1,cv2.LINE_AA)
+    cv2.circle(overlay,(left_eye[3][0]+165, mouth[6][1]+145),10,(255,255,255),-1,lineType=cv2.LINE_AA)
     opacity = 0.4
     cv2.addWeighted(overlay, opacity, img, 1 - opacity, 0, img)
 
+    #print("hi")
     #cv2.rectangle(overlay, (left_eye[3][0] +80, mouth[6][1]+60 ),( left_eye[3][0]+180 , mouth[6][1]+30 ), (127, 255, 0), -1)
     #cv2.rectangle(overlay, (left_eye[3][0] +80, mouth[6][1]+60 ),( left_eye[3][0]+180 , mouth[6][1]+30 ), (127, 255, 0), -1)
 
@@ -527,6 +552,18 @@ def face_ui(frame,features):
 face_landmark_path = 'shape_predictor_68_face_landmarks.dat'
 detector = dlib.get_frontal_face_detector()
 predictor = dlib.shape_predictor(face_landmark_path)
+
+# Global flag initialization
+gf_frown=0
+gf_blink=0
+gf_neutral=0
+gf_happy=0
+gf_angry=0
+gf_surprise=0
+gf_fear=0
+gf_disgust=0
+gf_sad=0
+
 
 #------------------------------------------------------------------------------------------------------
 ### HEAD POSE INITIALIZATION PART START -------------------------------------------------------------------------
@@ -592,6 +629,17 @@ while cam.isOpened():
     if ret==True:
         TOTAL_TIME_VIDEO = cam.get(cv2.CAP_PROP_POS_MSEC)
         num_frames+=1
+
+        gf_frown=0
+        gf_blink=0
+        gf_neutral=0
+        gf_happy=0
+        gf_angry=0
+        gf_surprise=0
+        gf_fear=0
+        gf_disgust=0
+        gf_sad=0
+
         img, rects, feature_array = find_features(img)
         #n_faces = len(rects)
         #print(n_faces)
@@ -610,8 +658,6 @@ while cam.isOpened():
 
 
 
-            # Make UI for Face
-            face_ui(img,features)
 
             l_EAR = calculate_EAR(l_eye)
             r_EAR = calculate_EAR(r_eye)
@@ -630,7 +676,8 @@ while cam.isOpened():
             #print("Frown Dist:"+str(frown_dist))
             if frown_dist < 16.0:
                 frown_count+=1
-
+                gf_frown=1
+            
             L_COUNTER += l_EAR <= EYE_AR_THRESH
             R_COUNTER += r_EAR <= EYE_AR_THRESH
 
@@ -638,21 +685,31 @@ while cam.isOpened():
             #print(eye_aspect_ratio)
             if L_COUNTER == EYE_AR_CONSEC_FRAMES:
                 L_COUNTER = 0
+                gf_blink=1
                 TOTAL_BLINK_COUNTER += 1  # Blink has been Detected in the Left eye
                 L_BLINK_COUNTER += 1
+                #print("l"+str(gf_blink))
             if R_COUNTER == EYE_AR_CONSEC_FRAMES:
                 R_COUNTER = 0
                 TOTAL_BLINK_COUNTER += 1  # Blink has been Detected in the  Right eye
                 R_BLINK_COUNTER += 1
-
+                gf_blink=1
+                #print("r"+str(gf_blink))
             
             #cv2.putText(img, "Blinks: {} , {} ".format(L_BLINK_COUNTER, R_BLINK_COUNTER), (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
             #cv2.putText(img, "EAR: {:.2f} , {:.2f} ".format(l_EAR,r_EAR), (300, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
             x.append(frame_no);
             y.append(l_EAR);
+            # Make UI for Face
+            face_ui(img,features,gf_blink)
+
+
         #out.write(img)
+
         cv2.imshow('my webcam', img)
-        cv2.imwrite('frame'+str(num_frames)+'.jpg',img)
+
+
+        #cv2.imwrite('frame'+str(num_frames)+'.jpg',img)
         waitKey = cv2.waitKey(1)
         if waitKey == 27: #Escape clicked.Exit program
             break
