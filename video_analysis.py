@@ -159,7 +159,60 @@ def get_mouth(features):
     return mouth
 
 
-def face_ui(frame,features):
+# Utility function for drawing an arc
+def convert_arc(pt1, pt2, sagitta):
+
+    # extract point coordinates
+    x1, y1 = pt1
+    x2, y2 = pt2
+
+    # find normal from midpoint, follow by length sagitta
+    n = np.array([y2 - y1, x1 - x2])
+    n_dist = np.sqrt(np.sum(n**2))
+
+    if np.isclose(n_dist, 0):
+        # catch error here, d(pt1, pt2) ~ 0
+        print('Error: The distance between pt1 and pt2 is too small.')
+
+    n = n/n_dist
+    x3, y3 = (np.array(pt1) + np.array(pt2))/2 + sagitta * n
+
+    # calculate the circle from three points
+    # see https://math.stackexchange.com/a/1460096/246399
+    A = np.array([
+        [x1**2 + y1**2, x1, y1, 1],
+        [x2**2 + y2**2, x2, y2, 1],
+        [x3**2 + y3**2, x3, y3, 1]])
+    M11 = np.linalg.det(A[:, (1, 2, 3)])
+    M12 = np.linalg.det(A[:, (0, 2, 3)])
+    M13 = np.linalg.det(A[:, (0, 1, 3)])
+    M14 = np.linalg.det(A[:, (0, 1, 2)])
+
+    if np.isclose(M11, 0):
+        # catch error here, the points are collinear (sagitta ~ 0)
+        print('Error: The third point is collinear.')
+
+    cx = 0.5 * M12/M11
+    cy = -0.5 * M13/M11
+    radius = np.sqrt(cx**2 + cy**2 + M14/M11)
+
+    # calculate angles of pt1 and pt2 from center of circle
+    pt1_angle = 180*np.arctan2(y1 - cy, x1 - cx)/np.pi
+    pt2_angle = 180*np.arctan2(y2 - cy, x2 - cx)/np.pi
+
+    return (cx, cy), radius, pt1_angle, pt2_angle
+
+# Utility function for drawing an arc
+def draw_ellipse(img, center, axes, angle,startAngle, endAngle, color,thickness=1, lineType=cv2.LINE_AA, shift=10):
+    # uses the shift to accurately get sub-pixel resolution for arc
+    # taken from https://stackoverflow.com/a/44892317/5087436
+    center = (int(round(center[0] * 2**shift)),int(round(center[1] * 2**shift)))
+    axes = (int(round(axes[0] * 2**shift)), int(round(axes[1] * 2**shift)))
+    return cv2.ellipse(img, center, axes, angle, startAngle, endAngle, color, thickness, lineType, shift)
+
+
+
+def face_ui(frame,features,gf_blink):
     (mStart, mEnd) = face_utils.FACIAL_LANDMARKS_IDXS["mouth"]
     (rebStart, rebEnd) = face_utils.FACIAL_LANDMARKS_IDXS["right_eyebrow"]
     (lebStart, lebEnd) = face_utils.FACIAL_LANDMARKS_IDXS["left_eyebrow"]
@@ -176,24 +229,204 @@ def face_ui(frame,features):
     left_eye = features[leStart:leEnd]
     nose = features[nStart:nEnd]
     jaw = features[jStart:jEnd]
-    cv2.line(frame, (int((nose[0][0]+left_eye[0][0])/2) ,left_eye[0][1]), (left_eye[1][0],left_eye[1][1]), (255, 255, 255),1)
-    cv2.line(frame, (left_eye[1][0],left_eye[1][1]), (left_eye[3][0],left_eye[3][1]), (255, 255, 255),1)
-    cv2.line(frame, (left_eye[3][0],left_eye[3][1]), (left_eye[5][0],left_eye[5][1]), (255, 255, 255),1)
-    cv2.line(frame, (int((nose[0][0]+left_eye[0][0])/2) ,left_eye[0][1]), (left_eye[5][0],left_eye[5][1]), (255, 255, 255),1)
-    
-    cv2.line(frame, (right_eye[0][0],right_eye[0][1]), (right_eye[2][0],right_eye[2][1]), (255, 255, 255),1)
-    cv2.line(frame, (right_eye[2][0],right_eye[2][1]), (int((nose[0][0]+right_eye[3][0])/2),right_eye[3][1]), (255, 255, 255),1)
-    cv2.line(frame, (int((nose[0][0]+right_eye[3][0])/2),right_eye[3][1]), (right_eye[4][0],right_eye[4][1]), (255, 255, 255),1)
-    cv2.line(frame, (right_eye[4][0],right_eye[4][1]), (right_eye[0][0],right_eye[0][1]), (255, 255, 255),1)
-    cv2.line(frame, (mouth[0][0],mouth[0][1]), (right_eye[4][0],right_eye[4][1]), (255, 255, 255),1)
-    cv2.line(frame, (mouth[6][0],mouth[6][1]), (left_eye[5][0],left_eye[5][1]), (255, 255, 255),1)
-    cv2.line(frame, (mouth[0][0],mouth[0][1]), (nose[6][0],nose[6][1]), (255, 255, 255),1)
-    cv2.line(frame, (mouth[6][0],mouth[6][1]), (nose[6][0],nose[6][1]), (255, 255, 255),1)
-    cv2.line(frame, (mouth[0][0],mouth[0][1]), (mouth[9][0],mouth[9][1]), (255, 255, 255),1)
-    cv2.line(frame, (mouth[6][0],mouth[6][1]), (mouth[9][0],mouth[9][1]), (255, 255, 255),1)
 
-    cv2.line(frame, (nose[6][0],nose[6][1]), (nose[4][0],nose[4][1]), (255, 255, 255),1)
-    cv2.line(frame, (nose[6][0],nose[6][1]), (nose[8][0],nose[8][1]), (255, 255, 255),1)
+
+    # Lines start    
+    cv2.line(frame, (jaw[8][0],jaw[8][1]), (jaw[8][0],nose[0][1]-50), (255, 255, 255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(jaw[8][0]-3,nose[0][1]-40),(jaw[8][0]+3,nose[0][1]-40),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.rectangle(frame,(jaw[8][0]-5,jaw[8][1]-5),(jaw[8][0]+5,jaw[8][1]+5),(255,255,255),2,lineType=cv2.LINE_AA)
+    
+    cv2.rectangle(frame,(jaw[8][0]-5,nose[0][1]-5),(jaw[8][0]+5,nose[0][1]+5),(255,255,255),2,lineType=cv2.LINE_AA)
+    
+    cv2.rectangle(frame,(jaw[8][0]-3,nose[6][1]-3),(jaw[8][0]+3,nose[6][1]+3),(255,255,255),1,lineType=cv2.LINE_AA)
+
+    # Cross sign
+    # Jaw parts
+    cv2.line(frame,(jaw[10][0],jaw[10][1]-3),(jaw[10][0],jaw[10][1]+3),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(jaw[10][0]-3,jaw[10][1]),(jaw[10][0]+3,jaw[10][1]),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(jaw[11][0]-3,jaw[11][1]),(jaw[11][0]+3,jaw[11][1]),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(jaw[11][0],jaw[11][1]-3),(jaw[11][0],jaw[11][1]+3),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(jaw[13][0]-3,jaw[13][1]),(jaw[13][0]+3,jaw[13][1]),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(jaw[13][0],jaw[13][1]-3),(jaw[13][0],jaw[13][1]+3),(255,255,255),2,lineType=cv2.LINE_AA)
+
+    cv2.line(frame,(jaw[6][0]-3,jaw[6][1]),(jaw[6][0]+3,jaw[6][1]),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(jaw[6][0],jaw[6][1]-3),(jaw[6][0],jaw[6][1]+3),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(jaw[5][0]-3,jaw[5][1]),(jaw[5][0]+3,jaw[5][1]),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(jaw[5][0],jaw[5][1]-3),(jaw[5][0],jaw[5][1]+3),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(jaw[3][0],jaw[3][1]-3),(jaw[3][0],jaw[3][1]+3),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(jaw[3][0]-3,jaw[3][1]),(jaw[3][0]+3,jaw[3][1]),(255,255,255),2,lineType=cv2.LINE_AA)
+
+    cv2.rectangle(frame,(jaw[2][0]-5,jaw[2][1]-5),(jaw[2][0]+5,jaw[2][1]+5),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.rectangle(frame,(jaw[14][0]-5,jaw[14][1]-5),(jaw[14][0]+5,jaw[14][1]+5),(255,255,255),2,lineType=cv2.LINE_AA)
+
+    # Mouth part
+    cv2.line(frame,(mouth[13][0]-3,mouth[13][1]),(mouth[13][0]+3,mouth[13][1]),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(mouth[13][0],mouth[13][1]-3),(mouth[13][0],mouth[13][1]+3),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(mouth[15][0]-3,mouth[15][1]),(mouth[15][0]+3,mouth[15][1]),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(mouth[15][0],mouth[15][1]-3),(mouth[15][0],mouth[15][1]+3),(255,255,255),2,lineType=cv2.LINE_AA)
+
+    cv2.rectangle(frame,(mouth[6][0]-5,mouth[6][1]-5),(mouth[6][0]+5,mouth[6][1]+5),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.rectangle(frame,(mouth[0][0]-5,mouth[0][1]-5),(mouth[0][0]+5,mouth[0][1]+5),(255,255,255),1,lineType=cv2.LINE_AA)
+
+    # Extra stars
+    cv2.line(frame,(mouth[13][0]-3,mouth[13][1]),(mouth[13][0]+3,mouth[13][1]),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(mouth[13][0],mouth[13][1]-3),(mouth[13][0],mouth[13][1]+3),(255,255,255),2,lineType=cv2.LINE_AA)
+
+    cv2.line(frame,(nose[8][0]-3,nose[8][1]),(nose[8][0]+3,nose[8][1]),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(nose[8][0],nose[8][1]-3),(nose[8][0],nose[8][1]+3),(255,255,255),2,lineType=cv2.LINE_AA)
+
+
+    # Extra Lines 
+    cv2.line(frame,(left_eye[4][0]-3,left_eye[4][1]+20),(left_eye[4][0]+3,left_eye[4][1]+20),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(left_eye[4][0],left_eye[4][1]+17),(left_eye[4][0],left_eye[4][1]+23),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(left_eye[3][0],left_eye[3][1]+17),(left_eye[3][0],left_eye[3][1]+23),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(left_eye[3][0]-3,left_eye[3][1]+20),(left_eye[3][0]+3,left_eye[3][1]+20),(255,255,255),2,lineType=cv2.LINE_AA)
+
+    
+    cv2.line(frame,(jaw[8][0]+3,mouth[9][1]),(jaw[8][0]-3,mouth[9][1]),(255,255,255),1,lineType=cv2.LINE_AA)
+
+    cv2.line(frame,(jaw[6][0],jaw[6][1]),(jaw[7][0],mouth[9][1]),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(jaw[7][0],mouth[9][1]),(jaw[8][0],mouth[9][1]+5),(255,255,255),1,lineType=cv2.LINE_AA)
+    
+    cv2.line(frame,(jaw[7][0],mouth[9][1]),(mouth[0][0],mouth[0][1]),(255,255,255),1,lineType=cv2.LINE_AA)
+
+    cv2.line(frame,(jaw[8][0],mouth[9][1]+10),(jaw[7][0]-6,mouth[9][1]+12),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(jaw[8][0],jaw[8][1]),(jaw[8][0]-9,jaw[7][1]-17),(255,255,255),1,lineType=cv2.LINE_AA)
+    
+    cv2.line(frame,(jaw[7][0]-6,mouth[9][1]+12),(jaw[8][0]-9,jaw[7][1]-17),(255,255,255),1,lineType=cv2.LINE_AA)
+
+    cv2.line(frame,(jaw[6][0],jaw[6][1]),(jaw[8][0]-9,jaw[7][1]-17),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(jaw[8][0]-11,jaw[8][1]+1),(jaw[8][0]-9,jaw[7][1]-17),(255,255,255),1,lineType=cv2.LINE_AA)
+    
+    cv2.line(frame,(jaw[8][0]-22,jaw[8][1]),(jaw[8][0]-9,jaw[7][1]-17),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(jaw[8][0]-22,jaw[8][1]),(jaw[8][0]-9,jaw[7][1]-17),(255,255,255),1,lineType=cv2.LINE_AA)
+
+    cv2.line(frame,(jaw[8][0],jaw[8][1]-20),(jaw[8][0]-9,jaw[7][1]-17),(255,255,255),1,lineType=cv2.LINE_AA)
+
+    cv2.line(frame,(jaw[8][0],mouth[9][1]+10),(jaw[8][0]-9,jaw[7][1]-17),(255,255,255),1,lineType=cv2.LINE_AA)
+
+    cv2.line(frame,(jaw[7][0],mouth[9][1]),(mouth[0][0],mouth[0][1]),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(jaw[7][0],mouth[9][1]),(jaw[6][0]-7,mouth[9][1]+4),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(mouth[0][0],mouth[0][1]),(jaw[6][0]-7,mouth[9][1]+4),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(jaw[7][0]-6,mouth[9][1]+12),(jaw[6][0]-7,mouth[9][1]+4),(255,255,255),1,lineType=cv2.LINE_AA)
+
+    cv2.line(frame,(jaw[5][0],mouth[0][1]+4),(jaw[6][0]-7,mouth[9][1]+4),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(jaw[5][0],mouth[0][1]+4),(mouth[0][0],mouth[0][1]),(255,255,255),1,lineType=cv2.LINE_AA)
+
+    # Above mouth line design
+    cv2.line(frame,(jaw[5][0],mouth[0][1]+4),(jaw[5][0]-6,mouth[2][1]-2),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(mouth[0][0],mouth[0][1]),(mouth[0][0]-2,mouth[2][1]),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(jaw[5][0]-6,mouth[2][1]-2),(mouth[0][0]-2,mouth[2][1]),(255,255,255),1,lineType=cv2.LINE_AA)
+
+    cv2.line(frame,(mouth[0][0]-2,mouth[2][1]),(jaw[5][0],mouth[0][1]+4),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(jaw[5][0]-6,mouth[2][1]-2),(mouth[0][0],mouth[0][1]),(255,255,255),1,lineType=cv2.LINE_AA)
+
+    cv2.line(frame,(jaw[5][0]-6,mouth[2][1]-2),(jaw[4][0],nose[3][1]+2),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(mouth[0][0]-2,mouth[2][1]),(mouth[0][0]-6,nose[3][1]+6),(255,255,255),1,lineType=cv2.LINE_AA)
+
+    cv2.line(frame,(mouth[0][0]-6,nose[3][1]+6),(jaw[4][0]+6,nose[3][1]),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(jaw[4][0],nose[3][1]+2),(jaw[4][0]+6,nose[3][1]),(255,255,255),1,lineType=cv2.LINE_AA)
+
+    cv2.line(frame,(jaw[4][0],nose[3][1]+2),(jaw[5][0]+1,nose[3][1]+9),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(jaw[5][0]+1,nose[3][1]+9),(mouth[0][0]-6,nose[3][1]+6),(255,255,255),1,lineType=cv2.LINE_AA)
+
+    cv2.line(frame,(jaw[5][0]+1,nose[3][1]+9),(jaw[5][0]-6,mouth[2][1]-2),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(jaw[5][0]+1,nose[3][1]+9),(mouth[0][0]-2,mouth[2][1]),(255,255,255),1,lineType=cv2.LINE_AA)
+
+    cv2.line(frame,(mouth[0][0],mouth[0][1]),(nose[4][0]-5,mouth[2][1]-7),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(mouth[0][0]-2,mouth[2][1]),(nose[4][0]-5,mouth[2][1]-7),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(nose[4][0]-5,mouth[2][1]-7),(nose[4][0]-8,mouth[2][1]-10),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(nose[4][0]-8,mouth[2][1]-10),(mouth[0][0]-2,mouth[2][1]),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(nose[4][0]-8,mouth[2][1]-10),(mouth[0][0]-6,nose[3][1]+6),(255,255,255),1,lineType=cv2.LINE_AA)
+
+    cv2.line(frame,(nose[4][0]-5,mouth[2][1]-10),(nose[4][0]-11,mouth[2][1]-10),(255,255,255),2)
+    cv2.line(frame,(nose[4][0]-8,mouth[2][1]-7),(nose[4][0]-8,mouth[2][1]-13),(255,255,255),2)
+
+    # Above nose design part
+    cv2.line(frame,(jaw[4][0],nose[3][1]+2),(jaw[4][0]+2,nose[3][1]-5),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(jaw[4][0]+6,nose[3][1]),(jaw[4][0]+2,nose[3][1]-5),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(jaw[4][0]+2,nose[3][1]-5),(jaw[4][0]+13,nose[2][1]+1),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(jaw[4][0]+6,nose[3][1]),(jaw[4][0]+13,nose[2][1]+1),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(mouth[0][0]-6,nose[3][1]+6),(jaw[4][0]+13,nose[2][1]+1),(255,255,255),1,lineType=cv2.LINE_AA)
+
+    # Eye design part
+    cv2.line(frame,(jaw[4][0]+2,nose[3][1]-5),(right_eye[0][0]-13,right_eye[0][1]-1),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(right_eye[0][0]-13,right_eye[0][1]-1),(right_eye[0][0],right_eye[0][1]),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(jaw[4][0]+13,nose[2][1]+1),(right_eye[0][0],right_eye[0][1]),(255,255,255),1,lineType=cv2.LINE_AA)
+
+    # Nose part
+    cv2.line(frame,(nose[4][0],nose[4][1]-15),(mouth[0][0]-6,nose[3][1]+6),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(nose[4][0],nose[4][1]-15),(nose[4][0]-8,mouth[2][1]-10),(255,255,255),1,lineType=cv2.LINE_AA)
+
+    cv2.line(frame,(nose[4][0],nose[4][1]-15),(right_eye[3][0]+3,right_eye[3][1]),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(right_eye[3][0]+3,right_eye[3][1]),(mouth[0][0]-6,nose[3][1]+6),(255,255,255),1,lineType=cv2.LINE_AA)
+
+    cv2.line(frame,(jaw[4][0]+13,nose[2][1]+1),(right_eye[2][0],nose[2][1]+1),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(right_eye[3][0]+3,right_eye[3][1]),(right_eye[2][0],nose[2][1]+1),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(right_eye[2][0],nose[2][1]+1),(mouth[0][0]-6,nose[3][1]+6),(255,255,255),1,lineType=cv2.LINE_AA)
+
+
+
+    # Right eye designs
+    cv2.line(frame,(right_eyebrow[2][0],right_eyebrow[2][1]),(jaw[8][0],right_eyebrow[2][1]),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(right_eyebrow[2][0],right_eyebrow[2][1]),(jaw[8][0],nose[0][1]),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(right_eyebrow[4][0]-1,nose[0][1]),(jaw[8][0],nose[0][1]),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(right_eyebrow[4][0]-1,nose[0][1]),(right_eyebrow[4][0]-1,nose[0][1]-9),(255,255,255),1,lineType=cv2.LINE_AA)
+
+
+    # Right eyebrows
+    cv2.line(frame,(right_eyebrow[0][0],right_eyebrow[0][1]-3),(right_eyebrow[0][0],right_eyebrow[0][1]+3),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(right_eyebrow[0][0]-3,right_eyebrow[0][1]),(right_eyebrow[0][0]+3,right_eyebrow[0][1]),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(right_eyebrow[1][0],right_eyebrow[1][1]-3),(right_eyebrow[1][0],right_eyebrow[1][1]+3),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(right_eyebrow[1][0]-3,right_eyebrow[1][1]),(right_eyebrow[1][0]+3,right_eyebrow[1][1]),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(right_eyebrow[2][0],right_eyebrow[2][1]-3),(right_eyebrow[2][0],right_eyebrow[2][1]+3),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(right_eyebrow[2][0]-3,right_eyebrow[2][1]),(right_eyebrow[2][0]+3,right_eyebrow[2][1]),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(right_eyebrow[3][0],right_eyebrow[3][1]+10),(right_eyebrow[3][0],right_eyebrow[3][1]+4),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(right_eyebrow[3][0]-3,right_eyebrow[3][1]+7),(right_eyebrow[3][0]+3,right_eyebrow[3][1]+7),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(right_eyebrow[4][0]-1,nose[0][1]-3),(right_eyebrow[4][0]-1,nose[0][1]+3),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(right_eyebrow[4][0]-4,nose[0][1]),(right_eyebrow[4][0]+2,nose[0][1]),(255,255,255),2,lineType=cv2.LINE_AA)
+    
+    cv2.line(frame,(right_eye[3][0],right_eye[3][1]),(left_eye[0][0],right_eye[3][1]),(255,255,255),1,lineType=cv2.LINE_AA)
+
+    cv2.line(frame,(right_eye[3][0],right_eye[3][1]-3),(right_eye[3][0],right_eye[3][1]+3),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(right_eye[3][0]-3,right_eye[3][1]),(right_eye[3][0]+3,right_eye[3][1]),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(left_eye[0][0],right_eye[3][1]-3),(left_eye[0][0],right_eye[3][1]+3),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(left_eye[0][0]-3,right_eye[3][1]),(left_eye[0][0]+3,right_eye[3][1]),(255,255,255),1,lineType=cv2.LINE_AA)
+
+    cv2.line(frame,(right_eye[0][0]-3,right_eye[0][1]),(right_eye[0][0]+3,right_eye[0][1]),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(right_eye[0][0],right_eye[0][1]-3),(right_eye[0][0],right_eye[0][1]+3),(255,255,255),1,lineType=cv2.LINE_AA)
+
+
+
+    # Left eyebrows
+    cv2.line(frame,(left_eyebrow[0][0],left_eyebrow[0][1]-3),(left_eyebrow[0][0],left_eyebrow[0][1]+3),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(left_eyebrow[0][0]-3,left_eyebrow[0][1]),(left_eyebrow[0][0]+3,left_eyebrow[0][1]),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(left_eyebrow[1][0],left_eyebrow[1][1]-3),(left_eyebrow[1][0],left_eyebrow[1][1]+3),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(left_eyebrow[1][0]-3,left_eyebrow[1][1]),(left_eyebrow[1][0]+3,left_eyebrow[1][1]),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(left_eyebrow[2][0],left_eyebrow[2][1]-3),(left_eyebrow[2][0],left_eyebrow[2][1]+3),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(left_eyebrow[2][0]-3,left_eyebrow[2][1]),(left_eyebrow[2][0]+3,left_eyebrow[2][1]),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(left_eyebrow[3][0],left_eyebrow[3][1]-3),(left_eyebrow[3][0],left_eyebrow[3][1]+3),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(left_eyebrow[3][0]-3,left_eyebrow[3][1]),(left_eyebrow[3][0]+3,left_eyebrow[3][1]),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(left_eyebrow[4][0],left_eyebrow[4][1]-3),(left_eyebrow[4][0],left_eyebrow[4][1]+3),(255,255,255),2,lineType=cv2.LINE_AA)
+    cv2.line(frame,(left_eyebrow[4][0]-3,left_eyebrow[4][1]),(left_eyebrow[4][0]+3,left_eyebrow[4][1]),(255,255,255),2,lineType=cv2.LINE_AA)
+    
+    cv2.line(frame,(left_eye[2][0]-3,left_eye[2][1]),(left_eye[2][0]+3,left_eye[2][1]),(255,255,255),1,lineType=cv2.LINE_AA)
+    cv2.line(frame,(left_eye[2][0],left_eye[2][1]-3),(left_eye[2][0],left_eye[2][1]+3),(255,255,255),1,lineType=cv2.LINE_AA)
+
+    # Curves
+    pt1 = (jaw[8][0],jaw[8][1])
+    pt2 = (jaw[6][0],jaw[6][1])
+    sagitta =5
+
+    center, radius, start_angle, end_angle = convert_arc(pt1, pt2, sagitta)
+    axes = (radius, radius)
+    draw_ellipse(frame, center, axes, 0, start_angle, end_angle, (255,255,255))
+
+    #cv2.ellipse(frame,center,axes,0,start_angle,end_angle,255,2)
+    #cv2.line(frame, (jaw[8][0],jaw[8][1]), (jaw[8][0],nose[0][1]-30), (255, 255, 255),2)
+
+    #cv2.line(frame, (int((nose[0][0]+left_eye[0][0])/2) ,left_eye[0][1]), (left_eye[1][0],left_eye[1][1]), (255, 255, 255),1)
+    #cv2.line(frame, (left_eye[1][0],left_eye[1][1]), (left_eye[3][0],left_eye[3][1]), (255, 255, 255),1)
 
     ###################################################################
     # Right
@@ -204,24 +437,24 @@ def face_ui(frame,features):
     #cv2.circle(overlay, (int((right_eye[0][0]+right_eye[3][0])/2) , int((right_eye[0][1]+right_eye[3][1])/2) ), 12, (255, 255, 0), -1)
 
     # Emotion Recogniton
-    cv2.rectangle(overlay, (jaw[0][0]-50 , jaw[0][1]-50 ),( jaw[0][0]-130 , jaw[0][1]-100 ), (127, 255, 0), -1)
-    cv2.putText(overlay,"Emotion",( jaw[0][0]-115 , jaw[0][1]-80), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(0,147,255),1,cv2.LINE_AA)
-    cv2.putText(overlay,"Recognition",( jaw[0][0]-125 , jaw[0][1]-60), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(0,147,255),1,cv2.LINE_AA)
+    cv2.rectangle(overlay, (jaw[0][0]-50 , jaw[0][1]-50 ),( jaw[0][0]-130 , jaw[0][1]-100 ), (255,128, 0), -1)
+    cv2.putText(overlay,"Emotion",( jaw[0][0]-115 , jaw[0][1]-80), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(255,255,255),1,cv2.LINE_AA)
+    cv2.putText(overlay,"Recognition",( jaw[0][0]-125 , jaw[0][1]-60), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(255,255,255),1,cv2.LINE_AA)
     opacity = 0.4
     cv2.addWeighted(overlay, opacity, img, 1 - opacity, 0, img)
 
 
     # Speech
-    cv2.rectangle(overlay, (jaw[0][0]-50 , jaw[0][1]-10 ),( jaw[0][0]-130 , jaw[0][1]+40 ), (127, 255, 0), -1)
-    cv2.putText(overlay,"Speech",( jaw[0][0]-115 , jaw[0][1]+20), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(0,147,255),1,cv2.LINE_AA)
-    #cv2.putText(overlay,"Recognition",( jaw[0][0]-125 , jaw[0][1]-65), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(0,147,255),1,cv2.LINE_AA)
+    cv2.rectangle(overlay, (jaw[0][0]-50 , jaw[0][1]-10 ),( jaw[0][0]-130 , jaw[0][1]+40 ), (255,128, 0), -1)
+    cv2.putText(overlay,"Personality",( jaw[0][0]-125 , jaw[0][1]+10), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(255,255,255),1,cv2.LINE_AA)
+    cv2.putText(overlay,"Analysis",( jaw[0][0]-115 , jaw[0][1]+30), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(255,255,255),1,cv2.LINE_AA)
     opacity = 0.4
     cv2.addWeighted(overlay, opacity, img, 1 - opacity, 0, img)
 
     # Facial Analysis
-    cv2.rectangle(overlay, (jaw[0][0]-50 , jaw[0][1]+80 ),( jaw[0][0]-130 , jaw[0][1]+130 ), (127, 255, 0), -1)
-    cv2.putText(overlay,"Facial",( jaw[0][0]-110 , jaw[0][1]+100), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(0,147,255),1,cv2.LINE_AA)
-    cv2.putText(overlay,"Analysis",( jaw[0][0]-115 , jaw[0][1]+120), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(0,147,255),1,cv2.LINE_AA)
+    cv2.rectangle(overlay, (jaw[0][0]-50 , jaw[0][1]+80 ),( jaw[0][0]-130 , jaw[0][1]+130 ), (255,128, 0), -1)
+    cv2.putText(overlay,"Facial",( jaw[0][0]-110 , jaw[0][1]+100), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(255,255,255),1,cv2.LINE_AA)
+    cv2.putText(overlay,"Analysis",( jaw[0][0]-115 , jaw[0][1]+120), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(255,255,255),1,cv2.LINE_AA)
     opacity = 0.4
     cv2.addWeighted(overlay, opacity, img, 1 - opacity, 0, img)
 
@@ -233,34 +466,102 @@ def face_ui(frame,features):
     # Smile design
     #cv2.line(frame,(mouth[6][0],mouth[6][1]), (mouth[6][0]+50,mouth[6][1]),(127,0,255),1)
 
-    cv2.rectangle(overlay, (left_eye[3][0] +80, mouth[6][1]-15 ),( left_eye[3][0]+180 , mouth[6][1]+15 ), (127, 255, 0), -1)
-    cv2.putText(overlay,'Smile',( left_eye[3][0]+115 , mouth[6][1]+5), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(0,47,255),1,cv2.LINE_AA)
+    cv2.rectangle(overlay, (left_eye[3][0] +80, mouth[6][1]-30 ),( left_eye[3][0]+180 , mouth[6][1] ), (255,128, 0), -1)
+    cv2.putText(overlay,'Angry',( left_eye[3][0]+95 , mouth[6][1]-10), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(255,255,255),1,cv2.LINE_AA)
+    cv2.circle(overlay,(left_eye[3][0]+165,mouth[6][1]-15),10,(255,255,255),-1,lineType=cv2.LINE_AA)
+    cv2.line(overlay, (left_eye[3][0]+158,mouth[6][1]-14), (left_eye[3][0]+162,mouth[6][1]-8), (255,128, 0),2,lineType=cv2.LINE_AA)
+    cv2.line(overlay, (left_eye[3][0]+173,mouth[6][1]-18), (left_eye[3][0]+162,mouth[6][1]-8), (255,128, 0),2,lineType=cv2.LINE_AA)
     opacity = 0.4
     cv2.addWeighted(overlay, opacity, img, 1 - opacity, 0, img)
+
 
     # Blink
     #cv2.line(frame,(left_eye[3][0],left_eye[3][1]), (left_eye[3][0]+50,left_eye[3][1]),(127,0,255),1)
 
-    cv2.rectangle(overlay, (left_eye[3][0] +80, left_eye[3][1]-15 ),( left_eye[3][0]+180 , left_eye[3][1]+15 ), (127, 255, 0), -1)
-    cv2.putText(overlay,'Blink',( left_eye[3][0]+115 , left_eye[3][1]+5), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(0,47,255),1,cv2.LINE_AA)
+    cv2.rectangle(overlay, (left_eye[3][0] +80, left_eye[3][1] ),( left_eye[3][0]+180 , left_eye[3][1]+30 ), (255,128, 0), -1)
+    cv2.putText(overlay,'Happy',( left_eye[3][0]+95 , left_eye[3][1]+20), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(255,255,255),1,cv2.LINE_AA)
+    cv2.circle(overlay,(left_eye[3][0]+165,left_eye[3][1]+15),10,(255,255,255),-1,lineType=cv2.LINE_AA)
+    cv2.line(overlay, (left_eye[3][0]+158,left_eye[3][1]+16), (left_eye[3][0]+162,left_eye[3][1]+22), (255,128, 0),2,lineType=cv2.LINE_AA)
+    cv2.line(overlay, (left_eye[3][0]+173,left_eye[3][1]+12), (left_eye[3][0]+162,left_eye[3][1]+22), (255,128, 0),2,lineType=cv2.LINE_AA)
     opacity = 0.4
     cv2.addWeighted(overlay, opacity, img, 1 - opacity, 0, img)
+
+
+    cv2.rectangle(overlay, (left_eye[3][0] +80, left_eye[3][1]-40 ),( left_eye[3][0]+180 , left_eye[3][1]-10 ), (255,128, 0), -1)
+    cv2.putText(overlay,'Neutral',( left_eye[3][0]+95 , left_eye[3][1]-20), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(255,255,255),1,cv2.LINE_AA)
+    cv2.circle(overlay,(left_eye[3][0]+165,left_eye[3][1]-25),10,(255,255,255),-1,lineType=cv2.LINE_AA)
+    cv2.line(overlay, (left_eye[3][0]+158,left_eye[3][1]-24), (left_eye[3][0]+162,left_eye[3][1]-18), (255,128, 0),2,lineType=cv2.LINE_AA)
+    cv2.line(overlay, (left_eye[3][0]+173,left_eye[3][1]-28), (left_eye[3][0]+162,left_eye[3][1]-18), (255,128, 0),2,lineType=cv2.LINE_AA)
+    opacity = 0.4
+    cv2.addWeighted(overlay, opacity, img, 1 - opacity, 0, img)
+
+
+    cv2.rectangle(overlay, (left_eye[3][0] +80, left_eye[3][1]-50 ),( left_eye[3][0]+180 , left_eye[3][1]-80 ), (255,128, 0), -1)
+    cv2.putText(overlay,'Blink',( left_eye[3][0]+95 , left_eye[3][1]-60), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(255,255,255),1,cv2.LINE_AA)
+    #print(gf_blink)
+    if gf_blink==1:
+        cv2.circle(overlay,(left_eye[3][0]+165,left_eye[3][1]-65),10,(255,255,255),-1,lineType=cv2.LINE_AA)
+        cv2.line(overlay, (left_eye[3][0]+158,left_eye[3][1]-64), (left_eye[3][0]+162,left_eye[3][1]-58), (255,128, 0),2,lineType=cv2.LINE_AA)
+        cv2.line(overlay, (left_eye[3][0]+173,left_eye[3][1]-68), (left_eye[3][0]+162,left_eye[3][1]-58), (255,128, 0),2,lineType=cv2.LINE_AA)
+        gf_blink=0
+    opacity = 0.4
+    cv2.addWeighted(overlay, opacity, img, 1 - opacity, 0, img)
+
+    cv2.rectangle(overlay, (left_eye[3][0] +80, left_eye[3][1]-90 ),( left_eye[3][0]+180 , left_eye[3][1]-120 ), (255,128, 0), -1)
+    cv2.putText(overlay,'Frown',( left_eye[3][0]+95 , left_eye[3][1]-100), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(255,255,255),1,cv2.LINE_AA)
+    cv2.circle(overlay,(left_eye[3][0]+165,left_eye[3][1]-105),10,(255,255,255),-1,lineType=cv2.LINE_AA)
+    cv2.line(overlay, (left_eye[3][0]+158,left_eye[3][1]-104), (left_eye[3][0]+162,left_eye[3][1]-98), (255,128, 0),2,lineType=cv2.LINE_AA)
+    cv2.line(overlay, (left_eye[3][0]+173,left_eye[3][1]-108), (left_eye[3][0]+162,left_eye[3][1]-98), (255,128, 0),2,lineType=cv2.LINE_AA)
+    opacity = 0.4
+    cv2.addWeighted(overlay, opacity, img, 1 - opacity, 0, img)
+
 
     # Communication
     #cv2.line(frame,(left_eye[3][0],left_eye[3][1]), (left_eye[3][0]+50,left_eye[3][1]),(127,0,255),1)
 
-    cv2.rectangle(overlay, (left_eye[3][0] +80, left_eye[3][1]-60 ),( left_eye[3][0]+180 , left_eye[3][1]-30 ), (127, 255, 0), -1)
-    cv2.putText(overlay,'Positive',( left_eye[3][0]+105 , left_eye[3][1]-40), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(0,47,255),1,cv2.LINE_AA)
-    opacity = 0.4
-    cv2.addWeighted(overlay, opacity, img, 1 - opacity, 0, img)
 
     # Positive Attitude
     #cv2.line(frame,(left_eye[3][0],left_eye[3][1]), (left_eye[3][0]+50,left_eye[3][1]),(127,0,255),1)
 
-    cv2.rectangle(overlay, (left_eye[3][0] +80, mouth[6][1]+60 ),( left_eye[3][0]+180 , mouth[6][1]+30 ), (127, 255, 0), -1)
-    cv2.putText(overlay,'Communication',( left_eye[3][0]+80 , mouth[6][1]+50), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(0,47,255),1,cv2.LINE_AA)
+    cv2.rectangle(overlay, (left_eye[3][0] +80, mouth[6][1]+10 ),( left_eye[3][0]+180 , mouth[6][1]+40 ), (255,128, 0), -1)
+    cv2.putText(overlay,'Surprise',( left_eye[3][0]+95 , mouth[6][1]+30), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(255,255,255),1,cv2.LINE_AA)
+    cv2.circle(overlay,(left_eye[3][0]+165,mouth[6][1]+25),10,(255,255,255),-1,lineType=cv2.LINE_AA)
+    cv2.line(overlay, (left_eye[3][0]+158,mouth[6][1]+26), (left_eye[3][0]+162,mouth[6][1]+32), (255,128, 0),2,lineType=cv2.LINE_AA)
+    cv2.line(overlay, (left_eye[3][0]+173,mouth[6][1]+22), (left_eye[3][0]+162,mouth[6][1]+32), (255,128, 0),2,lineType=cv2.LINE_AA)
     opacity = 0.4
     cv2.addWeighted(overlay, opacity, img, 1 - opacity, 0, img)
+
+
+
+    cv2.rectangle(overlay, (left_eye[3][0] +80, mouth[6][1]+80 ),( left_eye[3][0]+180 , mouth[6][1]+50 ), (255,128, 0), -1)
+    cv2.putText(overlay,'Fear',( left_eye[3][0]+95 , mouth[6][1]+70), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(255,255,255),1,cv2.LINE_AA)
+    cv2.circle(overlay,(left_eye[3][0]+165,mouth[6][1]+65),10,(255,255,255),-1,lineType=cv2.LINE_AA)
+    cv2.line(overlay, (left_eye[3][0]+158,mouth[6][1]+66), (left_eye[3][0]+162,mouth[6][1]+72), (255,128, 0),2,lineType=cv2.LINE_AA)
+    cv2.line(overlay, (left_eye[3][0]+173,mouth[6][1]+62), (left_eye[3][0]+162,mouth[6][1]+72), (255,128, 0),2,lineType=cv2.LINE_AA)
+    opacity = 0.4
+    cv2.addWeighted(overlay, opacity, img, 1 - opacity, 0, img)
+
+
+    cv2.rectangle(overlay, (left_eye[3][0] +80, mouth[6][1]+90 ),( left_eye[3][0]+180 , mouth[6][1]+120 ), (255,128, 0), -1)
+    cv2.putText(overlay,'Disgust',( left_eye[3][0]+95 , mouth[6][1]+110), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(255,255,255),1,cv2.LINE_AA)
+    cv2.circle(overlay,(left_eye[3][0]+165,mouth[6][1]+105),10,(255,255,255),-1,lineType=cv2.LINE_AA)
+    cv2.line(overlay, (left_eye[3][0]+158,mouth[6][1]+106), (left_eye[3][0]+162,mouth[6][1]+112), (255,128, 0),2,lineType=cv2.LINE_AA)
+    cv2.line(overlay, (left_eye[3][0]+173,mouth[6][1]+102), (left_eye[3][0]+162,mouth[6][1]+112), (255,128, 0),2,lineType=cv2.LINE_AA)
+    opacity = 0.4
+    cv2.addWeighted(overlay, opacity, img, 1 - opacity, 0, img)
+
+
+    cv2.rectangle(overlay, (left_eye[3][0] +80, mouth[6][1]+130 ),( left_eye[3][0]+180 , mouth[6][1]+160 ), (255,128, 0), -1)
+    cv2.putText(overlay,'Sad',( left_eye[3][0]+95 , mouth[6][1]+150), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(255,255,255),1,cv2.LINE_AA)
+    cv2.circle(overlay,(left_eye[3][0]+165, mouth[6][1]+145),10,(255,255,255),-1,lineType=cv2.LINE_AA)    
+    cv2.line(overlay, (left_eye[3][0]+158,mouth[6][1]+146), (left_eye[3][0]+162,mouth[6][1]+152), (255,128, 0),2,lineType=cv2.LINE_AA)
+    cv2.line(overlay, (left_eye[3][0]+173,mouth[6][1]+142), (left_eye[3][0]+162,mouth[6][1]+152), (255,128, 0),2,lineType=cv2.LINE_AA)
+    opacity = 0.4
+    cv2.addWeighted(overlay, opacity, img, 1 - opacity, 0, img)
+
+    #print("hi")
+    #cv2.rectangle(overlay, (left_eye[3][0] +80, mouth[6][1]+60 ),( left_eye[3][0]+180 , mouth[6][1]+30 ), (127, 255, 0), -1)
+    #cv2.rectangle(overlay, (left_eye[3][0] +80, mouth[6][1]+60 ),( left_eye[3][0]+180 , mouth[6][1]+30 ), (127, 255, 0), -1)
 
 
 
