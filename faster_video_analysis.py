@@ -572,6 +572,11 @@ def face_ui(frame,features,gf_blink):
 
 
 
+
+from imutils.video import FileVideoStream
+from imutils.video import FPS
+
+
 face_landmark_path = 'shape_predictor_68_face_landmarks.dat'
 detector = dlib.get_frontal_face_detector()
 predictor = dlib.shape_predictor(face_landmark_path)
@@ -628,10 +633,12 @@ line_pairs = [[0, 1], [1, 2], [2, 3], [3, 0],
               [4, 5], [5, 6], [6, 7], [7, 4],
               [0, 4], [1, 5], [2, 6], [3, 7]]
 
+import time
+cam = FileVideoStream("70bestest.mp4").start()
+time.sleep(1.0)
 
-
-cam = cv2.VideoCapture("73gud.mp4")
-
+#cam = cv2.VideoCapture("70bestest.mp4")
+fps = FPS().start()
 """ We use cv2.VideoWriter() to save the video """
 #fourcc = cv2.VideoWriter_fourcc(*'XVID')
 #out = cv2.VideoWriter('emotion_shrofile.avi',fourcc,20.0,(640,480))
@@ -647,100 +654,99 @@ x=list()
 y=list()
 TOTAL_TIME_VIDEO = 0
 
-while cam.isOpened():
-    ret, img = cam.read()
-    if ret==True:
-        TOTAL_TIME_VIDEO = cam.get(cv2.CAP_PROP_POS_MSEC)
-        num_frames+=1
-        print(num_frames)
-        gf_frown=0
-        gf_blink=0
-        gf_neutral=0
-        gf_happy=0
-        gf_angry=0
-        gf_surprise=0
-        gf_fear=0
-        gf_disgust=0
-        gf_sad=0
+while cam.more():
+    img = cam.read()
 
-        img, rects, feature_array = find_features(img)
-        #n_faces = len(rects)
-        #print(n_faces)
-        for (i, rect) in enumerate(rects):
-            features = feature_array[i]         # Currently only calculating blink for the First face
-            l_eye, r_eye = get_eyes(features)
-            l_eyebrow,r_eyebrow = get_eyebrows(features)
-            mouth = get_mouth(features)
-            
-            # Head Pose Code
-            tx,ty,tw,th = rect2bb(rect)
-            #cv2.rectangle(img,(tx,ty),(tx+tw,ty+th),(255,0,0),2)
-            h_shape = predictor(img,rect)
-            h_shape = face_utils.shape_to_np(h_shape)
-            reprojectdst, euler_angle = get_head_pose(h_shape)
+    #TOTAL_TIME_VIDEO = cam.get(cv2.CAP_PROP_POS_MSEC)
+    num_frames+=1
 
+    gf_frown=0
+    gf_blink=0
+    gf_neutral=0
+    gf_happy=0
+    gf_angry=0
+    gf_surprise=0
+    gf_fear=0
+    gf_disgust=0
+    gf_sad=0
 
+    img, rects, feature_array = find_features(img)
+    #n_faces = len(rects)
+    #print(n_faces)
+    for (i, rect) in enumerate(rects):
+        features = feature_array[i]         # Currently only calculating blink for the First face
+        l_eye, r_eye = get_eyes(features)
+        l_eyebrow,r_eyebrow = get_eyebrows(features)
+        mouth = get_mouth(features)
+        
+        # Head Pose Code
+        tx,ty,tw,th = rect2bb(rect)
+        #cv2.rectangle(img,(tx,ty),(tx+tw,ty+th),(255,0,0),2)
+        h_shape = predictor(img,rect)
+        h_shape = face_utils.shape_to_np(h_shape)
+        reprojectdst, euler_angle = get_head_pose(h_shape)
 
 
-            l_EAR = calculate_EAR(l_eye)
-            r_EAR = calculate_EAR(r_eye)
-
-            frown_dist = calculate_frown(l_eyebrow,r_eyebrow)
-            mouth_dist = calculate_mouth(mouth)
-            enthusiasm_dist = calculate_enthusiasm(l_eye,r_eye,l_eyebrow,r_eyebrow)
-
-            if round(abs(euler_angle[0,0]))<=20.0 and round(abs(euler_angle[1,0]))<=20.0:
-                attention+=1
-
-            #print("Enthusiasm:"+str(enthusiasm_dist))
-            if mouth_dist<12.0 and enthusiasm_dist>20.0:
-                enthusiasm_count+=1
-
-            #print("Frown Dist:"+str(frown_dist))
-            if frown_dist < 16.0:
-                frown_count+=1
-                gf_frown=1
-
-            L_COUNTER += l_EAR <= EYE_AR_THRESH
-            R_COUNTER += r_EAR <= EYE_AR_THRESH
-
-            eye_aspect_ratio = (l_EAR+r_EAR)/2.0
-            #print(eye_aspect_ratio)
-            if L_COUNTER == EYE_AR_CONSEC_FRAMES:
-                L_COUNTER = 0
-                gf_blink=1
-                TOTAL_BLINK_COUNTER += 1  # Blink has been Detected in the Left eye
-                L_BLINK_COUNTER += 1
-                #print("l"+str(gf_blink))
-            if R_COUNTER == EYE_AR_CONSEC_FRAMES:
-                R_COUNTER = 0
-                TOTAL_BLINK_COUNTER += 1  # Blink has been Detected in the  Right eye
-                R_BLINK_COUNTER += 1
-                gf_blink=1
-                #print("r"+str(gf_blink))
-            
-            #cv2.putText(img, "Blinks: {} , {} ".format(L_BLINK_COUNTER, R_BLINK_COUNTER), (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
-            #cv2.putText(img, "EAR: {:.2f} , {:.2f} ".format(l_EAR,r_EAR), (300, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
-            x.append(frame_no);
-            y.append(l_EAR);
-            # Make UI for Face
-            face_ui(img,features,gf_blink)
 
 
-        #out.write(img)
-        cv2.imwrite('emotion_frame'+str(num_frames)+'.jpg',img)
-        #cv2.imshow('my webcam', img)
+        l_EAR = calculate_EAR(l_eye)
+        r_EAR = calculate_EAR(r_eye)
+
+        frown_dist = calculate_frown(l_eyebrow,r_eyebrow)
+        mouth_dist = calculate_mouth(mouth)
+        enthusiasm_dist = calculate_enthusiasm(l_eye,r_eye,l_eyebrow,r_eyebrow)
+
+        if round(abs(euler_angle[0,0]))<=20.0 and round(abs(euler_angle[1,0]))<=20.0:
+            attention+=1
+
+        #print("Enthusiasm:"+str(enthusiasm_dist))
+        if mouth_dist<12.0 and enthusiasm_dist>20.0:
+            enthusiasm_count+=1
+
+        #print("Frown Dist:"+str(frown_dist))
+        if frown_dist < 16.0:
+            frown_count+=1
+            gf_frown=1
+
+        L_COUNTER += l_EAR <= EYE_AR_THRESH
+        R_COUNTER += r_EAR <= EYE_AR_THRESH
+
+        eye_aspect_ratio = (l_EAR+r_EAR)/2.0
+        #print(eye_aspect_ratio)
+        if L_COUNTER == EYE_AR_CONSEC_FRAMES:
+            L_COUNTER = 0
+            gf_blink=1
+            TOTAL_BLINK_COUNTER += 1  # Blink has been Detected in the Left eye
+            L_BLINK_COUNTER += 1
+            #print("l"+str(gf_blink))
+        if R_COUNTER == EYE_AR_CONSEC_FRAMES:
+            R_COUNTER = 0
+            TOTAL_BLINK_COUNTER += 1  # Blink has been Detected in the  Right eye
+            R_BLINK_COUNTER += 1
+            gf_blink=1
+            #print("r"+str(gf_blink))
+        
+        #cv2.putText(img, "Blinks: {} , {} ".format(L_BLINK_COUNTER, R_BLINK_COUNTER), (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+        #cv2.putText(img, "EAR: {:.2f} , {:.2f} ".format(l_EAR,r_EAR), (300, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+        x.append(frame_no);
+        y.append(l_EAR);
+        # Make UI for Face
+        face_ui(img,features,gf_blink)
 
 
-        #cv2.imwrite('frame'+str(num_frames)+'.jpg',img)
-        waitKey = cv2.waitKey(1)
-        if waitKey == 27: #Escape clicked.Exit program
-            break
-        elif waitKey == 114:#'R' Clicked.Reset Counter 
-            L_BLINK_COUNTER = 0
-            R_BLINK_COUNTER = 0
-    else:
+    #out.write(img)
+
+    cv2.imshow('my webcam', img)
+    fps.update()
+
+    #cv2.imwrite('frame'+str(num_frames)+'.jpg',img)
+    waitKey = cv2.waitKey(1)
+    if waitKey == 27: #Escape clicked.Exit program
         break
+    elif waitKey == 114:#'R' Clicked.Reset Counter 
+        L_BLINK_COUNTER = 0
+        R_BLINK_COUNTER = 0
+
 
 
 # Frown Calculations
@@ -765,8 +771,14 @@ TOTAL_TIME_VIDEO_EXTRA_SECS = TOTAL_TIME_VIDEO_SECS%60
 
 #if TOTAL_BLINK_COUNTER > TOTAL_TIME_VIDEO_SECS/4
 
+fps.stop()
+print("[INFO] elasped time: {:.2f}".format(fps.elapsed()))
+print("[INFO] approx. FPS: {:.2f}".format(fps.fps()))
+
+
+
 # Release the webcam
-cam.release()
+#cam.release()
 #out.release()
 cv2.destroyAllWindows()
-
+cam.stop()
